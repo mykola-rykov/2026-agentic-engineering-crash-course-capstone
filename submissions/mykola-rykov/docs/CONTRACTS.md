@@ -1,0 +1,29 @@
+# Local data contracts, version 1
+
+Schemas in `src/contracts/` are the runtime validation boundary for untrusted local JSON and worker messages. Exported TypeScript types are inferred from the same schemas. Use `parseTerrainManifest`, `parseMission`, `parseScenarioResult`, `parseWorkerRequest`, and `parseWorkerResponse` before consuming external data. Unknown fields, unsupported versions, nonfinite numbers, and invalid ranges produce errors with field paths; callers must retain their current state on failure.
+
+Files carry `schemaVersion: 1`; structured-clone worker messages carry `protocolVersion: 1` and a job id. Version changes require an explicit compatibility decision rather than silently accepting a newer shape. Workers validate job-envelope identity; stale-job rejection and cancellation behavior are implemented separately in the lifecycle task.
+
+## Units and references
+
+Field suffixes define units: metres (`M` or `metres`), seconds (`S`), metres/second (`Mps`), kilograms (`Kg`), watt-hours (`Wh`), watts (`W`), hertz (`Hz`), degrees (`Deg`), dB losses/margins, dBm powers, and dBi gains. Fractions use 0-1. Negative datum elevations and dB margins are valid. Remaining battery fraction can be negative for an overspent, infeasible mission.
+
+Horizontal coordinates are WGS84 latitude/longitude degrees. Bounds explicitly identify antimeridian crossing; projected coordinates and grid spacing use metres. Altitudes carry a vertical datum id and either `datum` or `above-dsm` reference. Mission waypoints and constraints must use the package's vertical datum. Above-DSM heights cannot be mixed with datum heights without a terrain-aware transformation. Missing altitude bounds, clearance, aircraft model, or battery can be retained while editing; analysis/routing must separately enforce its prerequisites.
+
+## Terrain packages
+
+The manifest indexes each tile's display, obstruction, and validity assets, byte counts, SHA-256, source ids, and overview level. Version 1 uses 256 x 256 signed 16-bit little-endian metre elevations. Display overviews use average resampling; obstruction overviews use maximum resampling. Validity is one unsigned byte per cell: `0` unknown, `1` source elevation, `2` confirmed ocean. Never infer ocean from a missing tile or zero elevation.
+
+The parser checks metadata structure, tile lengths/locations, duplicate asset paths/source ids, source references, ordered overview spacing, and the declared package-size limit. Actual checksums, file coverage, source peak preservation, datum transformations, and measured full-directory byte totals belong to the package builder/loader validators, not to JSON shape validation. Context assets also carry checksums and sizes. Asset paths must be relative and free of traversal; the loader must additionally enforce path containment.
+
+## Missions and results
+
+Missions retain one launch station, optional waypoints, outbound/return choice, the total distance cap, independent radio directions, antenna patterns/mounting, aircraft-class power model, equipment combinations, wind, uncertainty, and model versions. Empty power/battery data is represented as `null`, never inferred from range. The defaults constant documents the plan's initial values; it does not silently populate a malformed import.
+
+Results distinguish feasible, infeasible, and indeterminate states, with reasons required for the latter two. Unknown radio budgets, timing, or energy use `null`; missing terrain uses explicit unknown clearance with a reason. Overall feasibility requires computed RF/energy evidence and no recorded violations. A bounded search that finds no candidate sends `no-route` with its corridor and horizontal/vertical spacing rather than asserting universal infeasibility. Numerical budget equality, physical motion, final-route verification, and summary aggregation are validated by their respective numerical kernels, not by these structural schemas.
+
+## Worker transfer ownership
+
+Worker envelopes cover analysis/search requests, cancellation, progress, coarse/final results, qualified no-route outcomes, errors, and tile-buffer transfers. Only tile transfers contain `ArrayBuffer`; these are structured-clone values rather than JSON file content. Tile lengths must match representation. Transferring a buffer detaches it from the sender; validate before transfer and do not continue reading a detached buffer. The runtime must discard all obsolete job messages and yield between bounded numerical batches.
+
+Run `pnpm check` for contract fixtures covering JSON round trips, unsupported versions/fields, invalid numeric inputs, datum mixing, unknown-data feasibility, package declarations, envelope identity, and transferred-buffer length. Fixtures are explicitly synthetic and are not geographic or numerical validation references.

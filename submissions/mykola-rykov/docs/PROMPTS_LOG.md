@@ -56,3 +56,7 @@ create `openspec/changes/offline-rf-flight-planner/` with those proposal, design
 Implementation can begin with `$openspec-apply-change offline-rf-flight-planner`.
 
 ---
+
+$openspec-apply-change offline-rf-flight-planner
+
+---

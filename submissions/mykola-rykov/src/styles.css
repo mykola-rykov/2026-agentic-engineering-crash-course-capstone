@@ -1,0 +1,20 @@
+:root { font-family: system-ui, sans-serif; color: #e3ecef; background: #0e191f; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1440px; padding: 48px; margin: auto; }
+.eyebrow { color: #8ac6bb; font-size: 12px; letter-spacing: .16em; }
+h1 { font-size: clamp(30px, 4vw, 48px); font-weight: 600; margin: 14px 0; }
+h2 { font-size: 24px; font-weight: 500; }
+p { color: #a7b8c0; line-height: 1.65; }
+.workspace { display: grid; grid-template-columns: minmax(260px, 1fr) 2fr; margin-top: 40px; border: 1px solid #2c414b; border-radius: 12px; overflow: hidden; }
+.region-panel { padding: 32px; background: #15232a; }
+.status { color: #e0c88e; font-size: 13px; }
+button { border: 1px solid #79b6aa; background: #8ac6bb; color: #0e191f; padding: 12px 18px; border-radius: 6px; cursor: pointer; font: inherit; margin-top: 16px; }
+button:focus-visible { outline: 3px solid #e0c88e; outline-offset: 4px; }
+.scene-panel { min-height: 400px; display: grid; place-items: center; background: #16232a; }
+.scene { position: relative; width: 100%; height: 100%; min-height: 400px; }
+.scene canvas { display: block; }
+.scene-caption { position: absolute; bottom: 12px; left: 20px; right: 20px; font-size: 13px; z-index: 1; }
+.placeholder { color: #7b939e; }
+footer { margin-top: 24px; font-size: 12px; color: #7b939e; }
+@media (max-width: 800px) { main { padding: 24px; } .workspace { grid-template-columns: 1fr; } }

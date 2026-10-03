@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "alpine-adriatic",
+  "name": "Alpine-Adriatic launch region",
+  "center": { "latitudeDeg": 46.20572222222222, "longitudeDeg": 13.689916666666667 },
+  "requestedCenterDms": "46°12'20.6\"N 13°41'23.7\"E",
+  "projection": "+proj=aeqd +lat_0=46.20572222222222 +lon_0=13.689916666666667 +datum=WGS84 +units=m +no_defs",
+  "projectedBoundsM": { "minX": -110000, "maxX": 110000, "minY": -110000, "maxY": 110000 },
+  "sourceEnvelopeDeg": { "west": 11, "east": 16, "south": 44, "north": 48 },
+  "targetCellSizeM": 30,
+  "verticalDatum": { "id": "EGM2008", "epsg": 3855, "units": "metres", "surface": "DSM" },
+  "primary": {
+    "id": "copernicus-glo30-public",
+    "tileListUrl": "https://copernicus-dem-30m.s3.amazonaws.com/tileList.txt",
+    "baseUrl": "https://copernicus-dem-30m.s3.amazonaws.com",
+    "resolutionCode": "10",
+    "nominalResolutionM": 30,
+    "release": "AWS public COG 2021 release"
+  },
+  "fallback": {
+    "id": "copernicus-glo90",
+    "tileListUrl": "https://copernicus-dem-90m.s3.amazonaws.com/tileList.txt",
+    "baseUrl": "https://copernicus-dem-90m.s3.amazonaws.com",
+    "resolutionCode": "30",
+    "nominalResolutionM": 90,
+    "release": "AWS public COG 2021 release"
+  },
+  "oceanIdentification": {
+    "source": "Natural Earth 1:10m ocean polygons",
+    "version": "5.1.1",
+    "sourceUrl": "https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-ocean/",
+    "policy": "Context polygons alone do not authorize filling missing land. Confirm ocean cells against source terrain/water evidence before applying a sea-level class; uncertain coastlines and gaps remain unknown.",
+    "fillUnknownFromTileAbsence": false
+  },
+  "attributionRequirements": [
+    {
+      "source": "Copernicus WorldDEM-30",
+      "notice": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "licenseUrl": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+    },
+    {
+      "source": "Copernicus WorldDEM-90, when fallback is used",
+      "notice": "produced using Copernicus WorldDEM-90 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "licenseUrl": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+    },
+    { "source": "Natural Earth", "notice": "Made with Natural Earth. Public domain.", "licenseUrl": "https://www.naturalearthdata.com/about/terms-of-use/" }
+  ]
+}

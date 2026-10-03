@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "regionId": "alpine-adriatic",
+  "checkedAtUtc": "2026-10-03T21:49:27.847931+00:00",
+  "coverageCheck": {
+    "status": "passed",
+    "conservativeRequiredEnvelopeDeg": {
+      "west": 11.602859476910165,
+      "east": 15.776973856423169,
+      "south": 44.798755919151134,
+      "north": 47.61268852529331
+    },
+    "method": "AEQD radial distance with minimum WGS84 curvature bound"
+  },
+  "tileLists": [
+    {
+      "sourceId": "copernicus-glo30-public",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/tileList.txt",
+      "sha256": "10604e3052c98a09e9216f1a8f0a555a04148419757575f783d4937fd44316dc"
+    },
+    {
+      "sourceId": "copernicus-glo90",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/tileList.txt",
+      "sha256": "e5a5efe088e70506bc1007d22006bdcb09b0ec03177b62f9652363c13f49ed97"
+    }
+  ],
+  "tiles": [
+    {
+      "southDeg": 44,
+      "westDeg": 11,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N44_00_E011_00_DEM/Copernicus_DSM_COG_10_N44_00_E011_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 44,
+      "westDeg": 12,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N44_00_E012_00_DEM/Copernicus_DSM_COG_10_N44_00_E012_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 44,
+      "westDeg": 13,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N44_00_E013_00_DEM/Copernicus_DSM_COG_10_N44_00_E013_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 44,
+      "westDeg": 14,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N44_00_E014_00_DEM/Copernicus_DSM_COG_10_N44_00_E014_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 44,
+      "westDeg": 15,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N44_00_E015_00_DEM/Copernicus_DSM_COG_10_N44_00_E015_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 45,
+      "westDeg": 11,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N45_00_E011_00_DEM/Copernicus_DSM_COG_10_N45_00_E011_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 45,
+      "westDeg": 12,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N45_00_E012_00_DEM/Copernicus_DSM_COG_10_N45_00_E012_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 45,
+      "westDeg": 13,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N45_00_E013_00_DEM/Copernicus_DSM_COG_10_N45_00_E013_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 45,
+      "westDeg": 14,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N45_00_E014_00_DEM/Copernicus_DSM_COG_10_N45_00_E014_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 45,
+      "westDeg": 15,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N45_00_E015_00_DEM/Copernicus_DSM_COG_10_N45_00_E015_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 46,
+      "westDeg": 11,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N46_00_E011_00_DEM/Copernicus_DSM_COG_10_N46_00_E011_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 46,
+      "westDeg": 12,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N46_00_E012_00_DEM/Copernicus_DSM_COG_10_N46_00_E012_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 46,
+      "westDeg": 13,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N46_00_E013_00_DEM/Copernicus_DSM_COG_10_N46_00_E013_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 46,
+      "westDeg": 14,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N46_00_E014_00_DEM/Copernicus_DSM_COG_10_N46_00_E014_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 46,
+      "westDeg": 15,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N46_00_E015_00_DEM/Copernicus_DSM_COG_10_N46_00_E015_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 47,
+      "westDeg": 11,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N47_00_E011_00_DEM/Copernicus_DSM_COG_10_N47_00_E011_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 47,
+      "westDeg": 12,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N47_00_E012_00_DEM/Copernicus_DSM_COG_10_N47_00_E012_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 47,
+      "westDeg": 13,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N47_00_E013_00_DEM/Copernicus_DSM_COG_10_N47_00_E013_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 47,
+      "westDeg": 14,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N47_00_E014_00_DEM/Copernicus_DSM_COG_10_N47_00_E014_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    },
+    {
+      "southDeg": 47,
+      "westDeg": 15,
+      "status": "primary-listed",
+      "sourceId": "copernicus-glo30-public",
+      "nominalResolutionM": 30,
+      "downloadUrl": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N47_00_E015_00_DEM/Copernicus_DSM_COG_10_N47_00_E015_00_DEM.tif",
+      "downloaded": false,
+      "contentValidated": false
+    }
+  ],
+  "limitations": [
+    "Listing is acquisition evidence, not downloaded terrain validity.",
+    "Missing tiles remain unknown; tile absence never establishes ocean.",
+    "The package builder must validate source metadata, gaps, and actual footprint after reprojection."
+  ]
+}
