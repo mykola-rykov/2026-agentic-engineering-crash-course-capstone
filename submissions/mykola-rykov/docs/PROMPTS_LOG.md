@@ -118,3 +118,9 @@ The review is complete with two reproduced findings. The existing `pnpm check` r
    **suggestion:** Check continuity of the complete three-dimensional velocity direction at manual waypoints, and reject vertical corners until finite transition geometry is supplied.
 
 ---
+
+$openspec-propose Build two specs to implement the issues found in the code review above
+
+---
+
+$openspec-apply-change fix-coordinate-editing-and-vertical-corners
