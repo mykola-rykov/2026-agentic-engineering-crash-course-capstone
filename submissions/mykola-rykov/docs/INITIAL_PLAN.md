@@ -170,7 +170,7 @@ Range alone cannot determine endurance. Require a battery capacity and an aircra
 Use different models for the two aircraft classes:
 
 - **Fixed wing:** lift/drag polar, propulsive efficiency, aircraft mass, wing area, cruise speed, climb limits and maximum bank. Derive turn-radius and bank-induced drag penalties.
-- **Multirotor:** calibrated power-versus-airspeed table with mass and climb corrections, hover power, acceleration limits and maximum tilt.
+- **Multirotor:** calibrated electrical power-versus-airspeed table with mass and climb corrections, hover power, editable cruise airspeed and propulsion efficiency, acceleration limits and maximum tilt. Efficiency converts added antenna drag work; the power table is already electrical input.
 - **Both:** additional antenna mass, drag area, avionics power, radio electrical consumption and takeoff/landing energy allowance.
 
 Calculate energy by integrating electrical power over time. RF output watts must not be treated as radio electrical input watts; use a measured input-power table or amplifier-efficiency model.

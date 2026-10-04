@@ -31,7 +31,12 @@ Fixed-wing estimates SHALL account for mass, wing area, lift/drag polar, propuls
 
 ### Requirement: Multirotor energy and motion
 
-Multirotor estimates SHALL use calibrated power-versus-airspeed data, hover power, mass and climb corrections, acceleration limits, and maximum tilt.
+Multirotor estimates SHALL use calibrated electrical power-versus-airspeed data, hover power, mass and climb corrections, editable cruise airspeed and propulsive efficiency, acceleration limits, and maximum tilt. Propulsive efficiency SHALL convert added antenna drag work to electrical power without reapplying conversion to the calibrated electrical power table. Missing cruise or efficiency inputs SHALL withhold energy feasibility without inventing values.
+
+#### Scenario: Editable multirotor cruise and efficiency
+
+- **WHEN** a user changes multirotor cruise airspeed or propulsive efficiency
+- **THEN** the mission retains those values and time/added-drag energy calculations use them independently
 
 #### Scenario: Hover and climb
 

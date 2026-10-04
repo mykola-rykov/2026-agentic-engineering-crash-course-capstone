@@ -3,8 +3,16 @@ import type { MissionConfig } from '../contracts/mission';
 import { parseMission } from '../contracts/mission';
 import type { TerrainPackageManifest } from '../contracts/terrain';
 import { illustrativeAircraft } from '../energy/profiles';
+import EquipmentSelector from './EquipmentSelector';
 import { exportMission, importMission, requiredInputs } from './files';
 interface Props { mission: MissionConfig; terrain: TerrainPackageManifest; onChange: (mission: MissionConfig) => void }
+const modelLabels: Record<string, string> = {
+  massKg: 'Aircraft mass (kg)', referenceMassKg: 'Power-table reference mass (kg)', wingAreaM2: 'Wing area (m²)',
+  zeroLiftDragCoefficient: 'Zero-lift drag coefficient', inducedDragFactor: 'Induced drag factor', propulsiveEfficiency: 'Propulsive efficiency (fraction)',
+  cruiseSpeedMps: 'Cruise airspeed (m/s)', maxClimbMps: 'Maximum climb/descent speed (m/s)', maxBankDeg: 'Maximum bank (°)',
+  hoverPowerW: 'Hover electrical power (W)', massCorrectionExponent: 'Mass correction exponent', climbPowerWPerMps: 'Climb power per m/s (W)',
+  maxAccelerationMps2: 'Maximum acceleration (m/s²)', maxTiltDeg: 'Maximum tilt (°)',
+};
 function NumberField({ label, value, onChange, min, max }: { label: string; value: number | null; onChange: (n: number | null) => void; min?: number; max?: number }) {
   return <label>{label}<input type="number" step="any" value={value ?? ''} min={min} max={max} onChange={(e) => onChange(e.target.value === '' ? null : e.target.valueAsNumber)} /></label>;
 }
@@ -31,7 +39,7 @@ export default function Configuration({ mission, terrain, onChange }: Props) {
       <p>Profile: {mission.aircraft.name} · {mission.aircraft.calibration}. {mission.aircraft.provenance}</p>
       <label>Profile provenance<input value={mission.aircraft.provenance} onChange={(e) => update({ ...mission, aircraft: { ...mission.aircraft, provenance: e.target.value } })} /></label>
       <label>Profile calibration<select aria-label="Profile calibration" value={mission.aircraft.calibration} onChange={(e) => update({ ...mission, aircraft: { ...mission.aircraft, calibration: e.target.value as 'illustrative' | 'measured' } })}><option value="illustrative">Illustrative / uncalibrated</option><option value="measured">Measured dataset (provide provenance)</option></select></label>
-      {Object.entries(mission.aircraft.powerModel ?? {}).filter(([, value]) => typeof value === 'number').map(([field, value]) => <NumberField key={field} label={`Aircraft ${field}`} value={value as number} onChange={(n) => { if (mission.aircraft.powerModel) update({ ...mission, aircraft: { ...mission.aircraft, powerModel: { ...mission.aircraft.powerModel, [field]: n ?? NaN } } } as MissionConfig); }} />)}
+      {Object.entries(mission.aircraft.powerModel ?? {}).filter(([, value]) => typeof value === 'number').map(([field, value]) => <NumberField key={field} label={modelLabels[field] ?? field} value={value as number} onChange={(n) => { if (mission.aircraft.powerModel) update({ ...mission, aircraft: { ...mission.aircraft, powerModel: { ...mission.aircraft.powerModel, [field]: n ?? NaN } } } as MissionConfig); }} />)}
       <NumberField label="Battery capacity (Wh)" value={mission.aircraft.batteryCapacityWh} min={.001} onChange={(batteryCapacityWh) => update({ ...mission, aircraft: { ...mission.aircraft, batteryCapacityWh } })} />
       <NumberField label="Frequency (MHz)" value={mission.frequencyHz / 1e6} min={100} max={6000} onChange={(n) => update({ ...mission, frequencyHz: (n ?? NaN) * 1e6 })} />
       {(['uplink', 'downlink'] as const).map((direction) => <fieldset key={direction}><legend>{direction === 'uplink' ? 'Uplink · ground → aircraft' : 'Downlink · aircraft → ground'}</legend><NumberField label={`${direction} transmit power (dBm)`} value={equipment[direction].transmitPowerDbm} onChange={(n) => radio(direction, 'transmitPowerDbm', n ?? NaN)} /><NumberField label={`${direction} receiver sensitivity (dBm)`} value={equipment[direction].receiverSensitivityDbm} onChange={(n) => radio(direction, 'receiverSensitivityDbm', n ?? NaN)} /></fieldset>)}
@@ -42,6 +50,7 @@ export default function Configuration({ mission, terrain, onChange }: Props) {
       <NumberField label={`Minimum altitude (m above ${terrain.verticalDatum.id}) · required`} value={mission.constraints.minimumAltitude?.metres ?? null} onChange={(n) => altitude('minimumAltitude', n)} />
       <NumberField label={`Maximum altitude (m above ${terrain.verticalDatum.id}) · required`} value={mission.constraints.maximumAltitude?.metres ?? null} onChange={(n) => altitude('maximumAltitude', n)} />
       <NumberField label="Minimum DSM clearance (m) · required" value={mission.constraints.minimumTerrainClearanceM} min={0} onChange={(n) => constraints('minimumTerrainClearanceM', n)} />
+      <NumberField label="Search corridor width (km)" value={mission.constraints.corridorWidthM / 1000} min={.001} onChange={n => constraints('corridorWidthM', (n ?? NaN) * 1000)} />
       <NumberField label="Terrain height uncertainty (m)" value={mission.assumptions.terrainHeightUncertaintyM} min={0} onChange={(n) => update({ ...mission, assumptions: { ...mission.assumptions, terrainHeightUncertaintyM: n ?? NaN } })} />
       <NumberField label="RF loss allowance (dB)" value={mission.assumptions.rfLossAllowanceDb} min={0} onChange={(n) => update({ ...mission, assumptions: { ...mission.assumptions, rfLossAllowanceDb: n ?? NaN } })} />
       <NumberField label="Effective Earth radius factor" value={mission.assumptions.effectiveEarthRadiusFactor} min={.001} onChange={(n) => update({ ...mission, assumptions: { ...mission.assumptions, effectiveEarthRadiusFactor: n ?? NaN } })} />
@@ -49,6 +58,7 @@ export default function Configuration({ mission, terrain, onChange }: Props) {
       <NumberField label="Wind from direction (°)" value={mission.wind.fromDirectionDeg} min={0} max={360} onChange={(n) => update({ ...mission, wind: { ...mission.wind, fromDirectionDeg: n ?? NaN } })} />
     </details>
     {missing.length > 0 && <p>Required before routing: {missing.join(', ')}.</p>}
+    <EquipmentSelector mission={mission} onChange={onChange} />
     <details><summary>Complete mission configuration and files</summary>
       <p>Edit aircraft power models, antenna patterns/polarization/mounting/mass/drag, radio modes/losses/electrical draw, and equipment combinations in this versioned configuration. Values carry units in field names.</p>
       <button onClick={() => { try { setDraft(exportMission(mission)); setError(null); } catch (reason) { setError(String(reason)); } }}>Load configuration into editor</button>

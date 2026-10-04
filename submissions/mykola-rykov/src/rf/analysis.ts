@@ -14,9 +14,10 @@ import type { RadioProfile } from './profile';
 import { deltaBullington, freeSpaceLossDb, SPEED_OF_LIGHT_MPS } from './propagation';
 import { fresnelEvidence } from './fresnel';
 import { twoEndGains } from './antenna';
-import { energyPrerequisites } from '../energy/profiles';
+import { evaluateRouteEnergy } from '../energy/integration';
+import { requiredInputs } from '../mission/files';
 import { twoWayBudget } from './budget';
-interface RoutePoint extends ProjectedPoint { altitudeM: number; distanceM: number; headingDeg: number; pitchDeg: number; leg: 'outbound' | 'return' }
+export interface RoutePoint extends ProjectedPoint { altitudeM: number; distanceM: number; headingDeg: number; pitchDeg: number; leg: 'outbound' | 'return' }
 type Propagation = { status: 'known'; freeSpaceLossDb: number; diffractionLossDb: number; fraction: number; meetsFresnel: boolean; limitingPoint: ProjectedPoint; limitingHeightM: number; limitingDistanceM: number } | { status: 'unknown'; reason: string };
 export class AnalysisCache {
   readonly profiles = new BoundedCache<RadioProfile>(32 * 1024 * 1024);
@@ -56,7 +57,7 @@ async function routePoints(mission: MissionConfig, store: TerrainStore, context:
   if (mission.flightMode === 'return') leg([...resolved].reverse(), 'return', accounting.outboundM);
   return { points, totalM: accounting.totalM };
 }
-async function propagationAt(mission: MissionConfig, store: TerrainStore, station: ProjectedPoint & { altitudeM: number }, target: RoutePoint, cache: AnalysisCache, context: JobContext): Promise<Propagation> {
+export async function propagationAt(mission: MissionConfig, store: TerrainStore, station: ProjectedPoint & { altitudeM: number }, target: RoutePoint, cache: AnalysisCache, context: JobContext): Promise<Propagation> {
   const identity = `${store.manifest.id}/${store.manifest.packageVersion}/${store.manifest.verticalDatum.id}/${store.manifest.projection.definition}/${store.manifest.levels[0]!.cellSizeM}`;
   const xyKey = `${identity}/${station.xM}/${station.yM}/${target.xM}/${target.yM}`;
   const key = `${xyKey}/${station.altitudeM}/${target.altitudeM}/${mission.frequencyHz}/${mission.assumptions.effectiveEarthRadiusFactor}/${mission.assumptions.terrainHeightUncertaintyM}/${mission.assumptions.rfModel.id}/${mission.assumptions.rfModel.version}`;
@@ -109,13 +110,15 @@ export async function analyzeMission(input: MissionConfig, store: TerrainStore, 
   const results: ScenarioResult[] = [];
   for (let scenario = 0; scenario < mission.equipment.length; scenario++) {
     const equipment = mission.equipment[scenario]!, samples: ScenarioResult['routeSamples'] = [], violations: ScenarioResult['constraintViolations'] = [];
+    const energy = evaluateRouteEnergy(mission, equipment, route.points);
+    violations.push(...energy.violations);
     let minUp = Infinity, minDown = Infinity, missing = false, climbM = 0;
     if (route.totalM > mission.totalDistanceLimitM) violations.push({ constraint: 'total-distance', reason: `Total mission ${(route.totalM / 1000).toFixed(2)} km exceeds ${(mission.totalDistanceLimitM / 1000).toFixed(2)} km.`, sampleIndex: null });
     for (let i = 0; i < route.points.length; i++) {
       const point = route.points[i]!, position = projection.inverse(point);
       const surface = await sampleTerrain(manifest, (l, c, r) => store.get(l, c, r), point);
       const propagation = await propagationAt(mission, store, station, point, cache, context);
-      const attitude = { headingDeg: point.headingDeg, pitchDeg: point.pitchDeg, rollDeg: 0 };
+      const attitude = energy.attitudes[i]!;
       const gains = Math.hypot(point.xM - station.xM, point.yM - station.yM, point.altitudeM - station.altitudeM) === 0 ? { groundGainDbi: null, airborneGainDbi: null } : twoEndGains(equipment, { east: point.xM - station.xM, north: point.yM - station.yM, up: point.altitudeM - station.altitudeM }, attitude);
       const budget = twoWayBudget(equipment, gains.groundGainDbi, gains.airborneGainDbi, propagation.status === 'known' ? propagation : null, mission.assumptions.rfLossAllowanceDb, mission.constraints.requiredMarginDb);
       const altitude = { metres: point.altitudeM, reference: 'datum' as const, datumId: manifest.verticalDatum.id };
@@ -130,13 +133,15 @@ export async function analyzeMission(input: MissionConfig, store: TerrainStore, 
         if (less ? point.altitudeM < limit : point.altitudeM > limit) violations.push({ constraint: 'altitude', reason: 'Aircraft altitude violates the configured bound.', sampleIndex: i });
       }
       if (i > 0) climbM += Math.max(0, point.altitudeM - route.points[i - 1]!.altitudeM);
-      samples.push({ terrainEvidence: surface.status === 'known' ? { status: 'known', displayElevationM: surface.displayHeightM, obstructionElevationM: surface.obstructionHeightM, datumId: surface.datumId } : { status: 'unknown', reason: surface.reason }, distanceAlongRouteM: point.distanceM, elapsedTimeS: null, leg: point.leg, position, altitude, attitude, uplink: budget.status === 'indeterminate' ? null : budget.uplink, downlink: budget.status === 'indeterminate' ? null : budget.downlink, clearance });
+      samples.push({ terrainEvidence: surface.status === 'known' ? { status: 'known', displayElevationM: surface.displayHeightM, obstructionElevationM: surface.obstructionHeightM, datumId: surface.datumId } : { status: 'unknown', reason: surface.reason }, distanceAlongRouteM: point.distanceM, elapsedTimeS: energy.elapsedTimeS[i]!, leg: point.leg, position, altitude, attitude, uplink: budget.status === 'indeterminate' ? null : budget.uplink, downlink: budget.status === 'indeterminate' ? null : budget.downlink, clearance });
       if (i % 16 === 0 || i === route.points.length - 1) { context.progress('Manual route RF', (scenario + (i + 1) / route.points.length) / mission.equipment.length); await context.checkpoint(); }
     }
     const rfViolations = violations.filter((v) => v.constraint === 'radio-margin');
     const rfFeasibility: ScenarioResult['rfFeasibility'] = missing ? { status: 'indeterminate', reasons: ['Missing radio-ray terrain, height-reference or antenna evidence.'] } : rfViolations.length ? { status: 'infeasible', reasons: ['At least one directional link falls below the required margin.'] } : { status: 'feasible', reasons: [] };
-    const energyFeasibility: ScenarioResult['energyFeasibility'] = { status: 'indeterminate', reasons: energyPrerequisites(mission.aircraft).length ? energyPrerequisites(mission.aircraft) : ['Energy and motion models are not yet evaluated.'] };
-    results.push(parseScenarioResult({ schemaVersion: 1, jobId: context.jobId, scenarioId: `${mission.id}-${equipment.id}`, missionId: mission.id, equipmentId: equipment.id, terrain: mission.terrain, models: { rf: mission.assumptions.rfModel, energy: mission.assumptions.energyModel }, assumptions: ['ITU-R P.525-5 / P.526-15; scalar β=1 spherical approximation.', 'DSM and matching vertical datum; terrain uncertainty and RF allowance are separate.', 'Straight-segment headings and climb attitudes; bank/motion verification pending.', 'No interference, multipath, explicit foliage or weather simulation.', `Manual route sampled at no more than ${manifest.levels[0]!.cellSizeM} m; all radio rays use the finest installed grid.`], routeSamples: samples, summary: { distanceM: route.totalM, durationS: null, climbM, minimumUplinkMarginDb: Number.isFinite(minUp) ? minUp : null, minimumDownlinkMarginDb: Number.isFinite(minDown) ? minDown : null, minimumTwoWayMarginDb: Number.isFinite(minUp) && Number.isFinite(minDown) ? Math.min(minUp, minDown) : null, energy: null }, rfFeasibility, energyFeasibility, feasibility: violations.length || rfFeasibility.status === 'infeasible' ? { status: 'infeasible', reasons: ['Evaluated route constraints fail.'] } : { status: 'indeterminate', reasons: ['Energy, motion and complete routing constraints remain unevaluated.'] }, constraintViolations: violations }));
+    const energyFeasibility = energy.feasibility;
+    const missingConstraints = requiredInputs(mission);
+    const feasibility: ScenarioResult['feasibility'] = violations.length || rfFeasibility.status === 'infeasible' || energyFeasibility.status === 'infeasible' ? { status: 'infeasible', reasons: ['Evaluated route constraints fail.'] } : rfFeasibility.status !== 'feasible' || energyFeasibility.status !== 'feasible' || missingConstraints.length ? { status: 'indeterminate', reasons: [...(missingConstraints.length ? [`Required constraints are missing: ${missingConstraints.join(', ')}.`] : []), ...(rfFeasibility.status !== 'feasible' ? rfFeasibility.reasons : []), ...(energyFeasibility.status !== 'feasible' ? energyFeasibility.reasons : [])] } : { status: 'feasible', reasons: [] };
+    results.push(parseScenarioResult({ schemaVersion: 1, jobId: context.jobId, scenarioId: `${mission.id}-${equipment.id}`, missionId: mission.id, equipmentId: equipment.id, terrain: mission.terrain, models: { rf: mission.assumptions.rfModel, energy: mission.assumptions.energyModel }, assumptions: ['ITU-R P.525-5 / P.526-15; scalar β=1 spherical approximation.', 'DSM and matching vertical datum; terrain uncertainty and RF allowance are separate.', 'Missing aircraft inputs use geometric track heading/pitch for RF; configured models use wind-corrected air heading and attitude.', 'No interference, multipath, explicit foliage or weather simulation.', ...energy.assumptions, `Manual route sampled at no more than ${manifest.levels[0]!.cellSizeM} m; all radio rays use the finest installed grid.`], routeSamples: samples, summary: { distanceM: route.totalM, durationS: energy.durationS, climbM, minimumUplinkMarginDb: Number.isFinite(minUp) ? minUp : null, minimumDownlinkMarginDb: Number.isFinite(minDown) ? minDown : null, minimumTwoWayMarginDb: Number.isFinite(minUp) && Number.isFinite(minDown) ? Math.min(minUp, minDown) : null, energy: energy.energy }, rfFeasibility, energyFeasibility, feasibility, constraintViolations: violations }));
   }
   return results;
 }

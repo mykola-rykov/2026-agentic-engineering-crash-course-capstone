@@ -34,13 +34,14 @@ const fixedWingPowerSchema = z.strictObject({
 });
 const multirotorPowerSchema = z.strictObject({
   referenceMassKg: positive, massKg: positive, hoverPowerW: positive,
+  cruiseSpeedMps: positive.nullable().default(null), propulsiveEfficiency: fraction.positive().nullable().default(null),
   powerByAirspeed: z.array(z.strictObject({ airspeedMps: nonnegative, powerW: positive })).min(2).refine(
     (samples) => samples.every((sample, index) => index === 0 || sample.airspeedMps > samples[index - 1]!.airspeedMps),
     'Airspeed samples must be strictly increasing.',
   ),
   massCorrectionExponent: nonnegative, climbPowerWPerMps: nonnegative,
   maxClimbMps: positive, maxAccelerationMps2: positive, maxTiltDeg: positive.lt(90),
-});
+}).refine((model) => model.powerByAirspeed[0]?.airspeedMps !== 0 || Math.abs(model.powerByAirspeed[0]!.powerW - model.hoverPowerW) < 1e-6, 'The zero-speed power sample must match hover power.');
 const profileBase = {
   id: identifier, version: text, name: text, calibration: z.enum(['illustrative', 'measured']), provenance: text,
   batteryCapacityWh: positive.nullable(), avionicsPowerW: nonnegative, takeoffLandingEnergyWh: nonnegative,

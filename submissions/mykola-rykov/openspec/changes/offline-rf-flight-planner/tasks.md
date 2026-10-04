@@ -28,24 +28,24 @@ All items describe future implementation and remain unchecked. Follow the five d
 - [x] 2.7 Implement first-Fresnel-zone/60% clearance and limiting-obstruction evidence; verify threshold crossings alter clearance without adding an arbitrary Fresnel penalty to the RF budget.
 - [x] 2.8 Implement gain coordinate frames, heading/climb/bank rotations, fixed ground pointing, and polarization/cable/installation losses; verify beam departure and reverse heading change the expected antenna gains.
 - [x] 2.9 Compose separate directional budgets, uncertainty, and weaker-link feasibility; verify asymmetry, exact expected 3 dB power effects, and explicit unknown-data status.
-- [ ] 2.10 Add worker-based manual-route analysis and version-aware bounded profile/propagation caching; verify progress/cancel behavior and reuse for power-only changes with unchanged results.
-- [ ] 2.11 Implement route power/margin colours and point inspection of terrain, Fresnel, obstruction, and both links; verify low-margin/unknown samples expose evidence, document model scope and uncertainty, and pass `pnpm check` for this stage.
+- [x] 2.10 Add worker-based manual-route analysis and version-aware bounded profile/propagation caching; verify progress/cancel behavior and reuse for power-only changes with unchanged results.
+- [x] 2.11 Implement route power/margin colours and point inspection of terrain, Fresnel, obstruction, and both links; verify low-margin/unknown samples expose evidence, document model scope and uncertainty, and pass `pnpm check` for this stage.
 
 ## 3. Stage 3 - Aircraft energy and equipment comparisons
 
-- [ ] 3.1 Implement editable aircraft/equipment profiles and clearly illustrative presets; record provenance for any selected measured datasets and verify missing battery/model data withholds energy feasibility without hiding available RF output.
-- [ ] 3.2 Implement fixed-wing lift/drag, efficiency, cruise/climb power, bank drag, and turn-radius constraints; verify analytical turn fixtures and energy trends for mass, drag, climbs, and bank.
-- [ ] 3.3 Implement multirotor calibrated speed-power data, hover, mass/climb corrections, acceleration, and tilt constraints; verify hover/climb fixtures and rejection of infeasible motion.
-- [ ] 3.4 Integrate electrical power over segment time, including antenna loads, avionics, measured/efficiency-based radio input, and takeoff/landing allowance; verify hand-calculated constant-power cases, radio power accounting, and no descent regeneration.
-- [ ] 3.5 Implement constant wind, independent return-leg timing/energy, and reserve checks; verify reverse-heading wind cases, impossible progress rejection, and reserve boundary failures.
-- [ ] 3.6 Enumerate selected antenna/power combinations while reusing invariant propagation; verify one configuration's equipment changes do not alter another and all selected combinations receive distinct scenario identities.
-- [ ] 3.7 Implement comparison cards with common scales, directional minima, distance/time/climb, energy breakdown, reserve, and feasibility reasons; verify consistent units/scales and unavailable energy metrics.
-- [ ] 3.8 Implement altitude coverage slices and route distance-altitude heatmaps using bounded worker requests; verify directional heading/attitude assumptions are displayed and obsolete view jobs are cancelled.
-- [ ] 3.9 Generate pros/cons from numerical differences; verify the 7 km/5 dB comparison fixture and no invented unavailable metrics, document power-model inputs/calibration limits, and pass `pnpm check` for this stage.
+- [x] 3.1 Implement editable aircraft/equipment profiles and clearly illustrative presets; record provenance for any selected measured datasets and verify missing battery/model data withholds energy feasibility without hiding available RF output.
+- [x] 3.2 Implement fixed-wing lift/drag, efficiency, cruise/climb power, bank drag, and turn-radius constraints; verify analytical turn fixtures and energy trends for mass, drag, climbs, and bank.
+- [x] 3.3 Implement multirotor calibrated speed-power data, hover, mass/climb corrections, editable cruise airspeed/propulsive efficiency, acceleration, and tilt constraints; verify hover/climb fixtures, independent editing, missing-input handling, and rejection of infeasible motion.
+- [x] 3.4 Integrate electrical power over segment time, including antenna loads, avionics, measured/efficiency-based radio input, and takeoff/landing allowance; verify hand-calculated constant-power cases, radio power accounting, and no descent regeneration.
+- [x] 3.5 Implement constant wind, independent return-leg timing/energy, and reserve checks; verify reverse-heading wind cases, impossible progress rejection, and reserve boundary failures.
+- [x] 3.6 Enumerate selected antenna/power combinations while reusing invariant propagation; verify one configuration's equipment changes do not alter another and all selected combinations receive distinct scenario identities.
+- [x] 3.7 Implement comparison cards with common scales, directional minima, distance/time/climb, energy breakdown, reserve, and feasibility reasons; verify consistent units/scales and unavailable energy metrics.
+- [x] 3.8 Implement altitude coverage slices and route distance-altitude heatmaps using bounded worker requests; verify directional heading/attitude assumptions are displayed and obsolete view jobs are cancelled.
+- [x] 3.9 Generate pros/cons from numerical differences; verify the 7 km/5 dB comparison fixture and no invented unavailable metrics, document power-model inputs/calibration limits, and pass `pnpm check` for this stage.
 
 ## 4. Stage 4 - Bounded automatic routing and final verification
 
-- [ ] 4.1 Implement adjustable waypoint/direct-route corridors with a 10 km default and package clipping; verify corridor changes restrict explored candidates and unknown coverage cannot support feasible routes.
+- [x] 4.1 Implement adjustable waypoint/direct-route corridors with a 10 km default and package clipping; verify corridor changes restrict explored candidates and unknown coverage cannot support feasible routes.
 - [ ] 4.2 Build the coarse approximately 250 m horizontal/50 m vertical graph and aircraft motion states; verify fixed-wing heading-aware turn geometry and multirotor climb/acceleration/tilt constraints.
 - [ ] 4.3 Implement shortest-feasible search with distance/energy resource accounting and all mission constraints; verify rejection fixtures for distance, reserve, clearance, altitude, climb/turn, and either directional margin.
 - [ ] 4.4 Add lowest-energy and highest-minimum-margin searches, deduplication, and nondominated filtering; verify a fixture with distinct objective winners plus duplicate/dominated candidates.
@@ -54,13 +54,3 @@ All items describe future implementation and remain unchecked. Follow the five d
 - [ ] 4.7 Add route smoothing only with full revalidation of modified geometry; verify a smoothing-induced clearance or motion violation is rejected before publication as feasible.
 - [ ] 4.8 Add progressive bounded search, cancellation, and qualified no-result messages; verify abort responsiveness, memory eviction, and wording that identifies corridor/resolution without asserting universal impossibility.
 - [ ] 4.9 Integrate verified route alternatives with scenario cards and JSON assumptions; document objectives, search bounds, sampling guarantees, and outcome states, and pass end-to-end fixtures and `pnpm check` for this stage.
-
-## 5. Stage 5 - Benchmarks, additional regions, and release integration
-
-- [ ] 5.1 Record the 24 GB benchmark laptop/browser, representative mission/region, altitude/corridor bounds, 12 equipment configurations, versions, and cache conditions; deliver a reproducible benchmark protocol and verify its setup runs as documented.
-- [ ] 5.2 Measure interaction FPS, coarse/refined latency, cancellation, and peak memory under repeated comparisons; verify at least 30 FPS, coarse results within 5 seconds, refined results within 30 seconds, and bounded caches, profiling/remediating failures before acceptance.
-- [ ] 5.3 Build and validate additional regional fixtures/packages using the established pipeline, including fallback-source metadata and cross-region geographic edge cases; verify package budgets, checksums, attribution, seams, datum handling, negative elevations, antimeridian, and high-latitude behavior remain correct.
-- [ ] 5.4 Select/document the first-release desktop OS/browser support matrix and package the static localhost launcher with application, workers, fonts, context, and regions; verify clean installation and launch on every declared supported target.
-- [ ] 5.5 Run the full mission-edit/import/analyze/compare/search/export workflow from a clean networking-disabled installation; verify zero external runtime dependencies and inspect exported mission reproduction with the distributed versions.
-- [ ] 5.6 Publish local release instructions, model/terrain attribution, measured acceptance results, package installation, troubleshooting, version compatibility, and rollback procedure; verify each documented launch/validation step against the release bundle.
-- [ ] 5.7 Complete release integration validation: verify `pnpm check` is green, package validators pass, final-route numerical/constraint fixtures pass, and offline/performance evidence is recorded before marking implementation complete.

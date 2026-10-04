@@ -20,7 +20,11 @@ The parser checks metadata structure, tile lengths/locations, duplicate asset pa
 
 Missions retain one launch station, optional waypoints, outbound/return choice, the total distance cap, independent radio directions, antenna patterns/mounting, aircraft-class power model, equipment combinations, wind, uncertainty, and model versions. Empty power/battery data is represented as `null`, never inferred from range. The defaults constant documents the plan's initial values; it does not silently populate a malformed import.
 
+Multirotor power profiles have editable `cruiseSpeedMps` and `propulsiveEfficiency`. Missing fields in older version-1 profiles normalize to null with explicit energy prerequisites, without substituting illustrative values. Propulsive efficiency converts additional drag work; the speed–power table is already electrical. Zero-speed table data must agree with hover power.
+
 Results distinguish feasible, infeasible, and indeterminate states, with reasons required for the latter two. Unknown radio budgets, timing, or energy use `null`; missing terrain uses explicit unknown clearance with a reason. Overall feasibility requires computed RF/energy evidence and no recorded violations. A bounded search that finds no candidate sends `no-route` with its corridor and horizontal/vertical spacing rather than asserting universal infeasibility. Numerical budget equality, physical motion, final-route verification, and summary aggregation are validated by their respective numerical kernels, not by these structural schemas.
+
+Route samples may include `terrainEvidence` with local display/obstruction elevations and datum, independently of radio clearance. This allows the inspector to show known local DSM even when a terminal's conservative height or a distant radio-ray gap prevents a budget. A known constraint failure makes overall feasibility infeasible while incomplete RF evidence can still make aggregate RF indeterminate.
 
 ## Runtime terrain coordinates and sampling
 
@@ -30,6 +34,8 @@ Results distinguish feasible, infeasible, and indeterminate states, with reasons
 
 ## Worker transfer ownership
 
-Worker envelopes cover analysis/search requests, cancellation, progress, coarse/final results, qualified no-route outcomes, errors, and tile-buffer transfers. Only tile transfers contain `ArrayBuffer`; these are structured-clone values rather than JSON file content. Tile lengths must match representation. Transferring a buffer detaches it from the sender; validate before transfer and do not continue reading a detached buffer. The runtime must discard all obsolete job messages and yield between bounded numerical batches.
+Worker envelopes cover analysis/search requests, cancellation, progress, coarse/final results, qualified no-route outcomes, errors, and tile-buffer transfers. Tile and RF-grid transfers contain `ArrayBuffer`; these are structured-clone values rather than JSON file content. Tile lengths must match representation. Transferring a buffer detaches it from the sender; validate before transfer and do not continue reading a detached buffer. The runtime must discard all obsolete job messages and yield between bounded numerical batches.
+
+The `rf-view` request adds an explicit slice or heatmap, selected equipment, ordered bounds, and fixed airborne attitude. A heatmap path is limited to 8192 points. Both views are bounded to 2048 cells; UI defaults to 12 × 12 and allows up to 32 × 32. The `view-grid` response transfers newly allocated Float32 margin/power buffers and a Uint8 validity buffer, requiring matching dimensions and finite known values. Validity 0 is unknown, not zero power/margin. Axis labels/bounds and assumptions accompany the grid. View completion ends its job; stale results are discarded just like route results. Its worker owns separate bounded terrain/profile/propagation caches (32/32/16 MiB), avoiding a full-region 3D RF allocation.
 
 Run `pnpm check` for contract fixtures covering JSON round trips, unsupported versions/fields, invalid numeric inputs, datum mixing, unknown-data feasibility, package declarations, envelope identity, and transferred-buffer length. Fixtures are explicitly synthetic and are not geographic or numerical validation references.

@@ -35,6 +35,19 @@ describe('worker lifecycle', () => {
     await Promise.all([runner.handle(request('a')), runner.handle(request('b'))]);
     expect(output.filter((message) => message.type === 'progress').map((message) => message.jobId)).toEqual(['b']);
   });
+  it('obsolete RF view results are discarded and a current grid ends its job', () => {
+    let listener: ((event: MessageEvent) => void) | null = null;
+    const received: WorkerResponse[] = [];
+    const port: WorkerPort = { postMessage: () => {}, addEventListener: (_, handler) => { listener = handler; }, removeEventListener: () => { listener = null; } };
+    const client = new JobClient(port, message => received.push(message));
+    const view = { kind: 'slice' as const, columns: 2, rows: 2, minXM: 0, maxXM: 100, minYM: 0, maxYM: 100, altitudeM: 100, attitude: { headingDeg: 0, pitchDeg: 0, rollDeg: 0 } };
+    const input = { type: 'rf-view' as const, mission: missionFixture(), equipmentId: 'equipment', view };
+    const old = client.start(input), next = client.start(input);
+    const deliver = (jobId: string) => { if (listener) listener({ data: { protocolVersion: 1, jobId, type: 'view-grid', kind: 'slice', columns: 2, rows: 2, horizontalLabel: 'x', verticalLabel: 'y', horizontalMinimum: 0, horizontalMaximum: 100, verticalMinimum: 0, verticalMaximum: 100, assumptions: ['Fixed attitude fixture'], marginBuffer: new ArrayBuffer(16), powerBuffer: new ArrayBuffer(16), validityBuffer: new ArrayBuffer(4) } } as MessageEvent); };
+    deliver(old); expect(received).toHaveLength(0);
+    deliver(next); deliver(next); expect(received).toHaveLength(1);
+    client.dispose();
+  });
   it('transfers an isolated view copy without detaching cached arrays', () => {
     const cached = new Int16Array([3, 5, 7]);
     const copy = transferCopy(cached.subarray(1));

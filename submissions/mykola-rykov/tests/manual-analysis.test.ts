@@ -6,6 +6,7 @@ import { createProjection } from '../src/terrain/coordinates';
 import type { TerrainStore } from '../src/terrain/store';
 import type { JobContext } from '../src/workers/lifecycle';
 import { BoundedCache } from '../src/workers/cache';
+import { illustrativeAircraft } from '../src/energy/profiles';
 function fixture() {
   const manifest = terrainFixture(); manifest.projectedBounds = { minXM: 0, maxXM: 7680, minYM: 0, maxYM: 7680 };
   const tile = { display: new Int16Array(65536), obstruction: new Int16Array(65536), validity: new Uint8Array(65536).fill(1) };
@@ -50,4 +51,46 @@ test('manual terrain work honors cancellation checkpoints', async () => {
   const { mission, store } = fixture(); let checkpoints = 0;
   const ctx = context(); ctx.checkpoint = async () => { if (++checkpoints === 4) throw new Error('cancelled'); };
   await expect(analyzeMission(mission, store, ctx)).rejects.toThrow('cancelled'); expect(checkpoints).toBe(4);
+});
+test('missing model and missing battery independently retain available RF evidence', async () => {
+  const { mission, store } = fixture();
+  for (const missing of ['batteryCapacityWh', 'powerModel'] as const) {
+    mission.aircraft = illustrativeAircraft('fixed-wing');
+    mission.aircraft[missing] = null;
+    const result = (await analyzeMission(mission, store, context()))[0]!;
+    expect(result.energyFeasibility.status).toBe('indeterminate');
+    expect(result.summary.energy).toBeNull();
+    expect(result.summary.minimumTwoWayMarginDb).not.toBeNull();
+    expect(result.routeSamples.every((sample) => sample.uplink && sample.downlink)).toBe(true);
+  }
+});
+test('complete straight manual mission integrates timing, energy and user constraints', async () => {
+  const { mission, store } = fixture(); mission.aircraft = illustrativeAircraft('fixed-wing');
+  mission.constraints.minimumAltitude = { ...mission.launch.altitude, metres: 50 };
+  mission.constraints.maximumAltitude = { ...mission.launch.altitude, metres: 500 };
+  mission.constraints.minimumTerrainClearanceM = 20;
+  const result = (await analyzeMission(mission, store, context()))[0]!;
+  expect(result.summary.durationS).toBeCloseTo(1000 / 22, 4);
+  expect(result.summary.energy!.totalWh).toBeGreaterThan(3);
+  expect(result.routeSamples.at(-1)!.elapsedTimeS).toBe(result.summary.durationS);
+  expect(result.energyFeasibility.status).toBe('feasible');
+  expect(result.feasibility.status).toBe('feasible');
+  mission.aircraft.batteryCapacityWh = 1;
+  const reserve = (await analyzeMission(mission, store, context()))[0]!;
+  expect(reserve.energyFeasibility.status).toBe('infeasible');
+  expect(reserve.constraintViolations.some(v => v.constraint === 'battery-reserve')).toBe(true);
+});
+test('multiple equipment scenarios reuse propagation and do not change other results', async () => {
+  const { mission, store } = fixture(); mission.aircraft = illustrativeAircraft('fixed-wing');
+  const second = structuredClone(mission.equipment[0]!); second.id = 'second'; second.downlink.transmitPowerDbm += 3;
+  mission.equipment.push(second);
+  const cache = new AnalysisCache(), before = await analyzeMission(mission, store, context(), cache);
+  expect(before[0]!.scenarioId).not.toBe(before[1]!.scenarioId);
+  expect(cache.propagationMisses).toBe(before[0]!.routeSamples.length);
+  const misses = cache.propagationMisses;
+  mission.equipment[1]!.airborneAntenna.massKg = 1;
+  const after = await analyzeMission(mission, store, context(), cache);
+  expect(after[0]).toEqual(before[0]);
+  expect(after[1]!.summary.energy!.propulsionWh).toBeGreaterThan(before[1]!.summary.energy!.propulsionWh);
+  expect(cache.propagationMisses).toBe(misses);
 });

@@ -3,6 +3,7 @@ import type { MissionConfig } from '../contracts/mission';
 import type { ScenarioResult } from '../contracts/result';
 import type { TerrainStore } from '../terrain/store';
 import { JobClient } from '../workers/lifecycle';
+import ComparisonCards from './ComparisonCards';
 interface Props { mission: MissionConfig; store: TerrainStore; sampleIndex: number; onInspect: (index: number) => void; onScenario: (result: ScenarioResult | null) => void }
 const numeric = (value: number | null, unit: string) => value === null ? 'Unavailable' : `${value.toFixed(2)} ${unit}`;
 export default function AnalysisPanel({ mission, store, sampleIndex, onInspect, onScenario }: Props) {
@@ -42,6 +43,7 @@ export default function AnalysisPanel({ mission, store, sampleIndex, onInspect, 
       <label>Equipment scenario<select aria-label="Equipment scenario" value={scenarioIndex} onChange={(e) => { const index = Number(e.target.value); setScenarioIndex(index); onScenario(results[index] ?? null); onInspect(0); }}>{results.map((r, i) => <option key={r.scenarioId} value={i}>{r.equipmentId}</option>)}</select></label>
       <p data-testid="rf-result-status">RF: {result.rfFeasibility.status} · Overall: {result.feasibility.status}</p>
       <dl><dt>Uplink / downlink minimum available margin</dt><dd>{numeric(result.summary.minimumUplinkMarginDb, 'dB')} / {numeric(result.summary.minimumDownlinkMarginDb, 'dB')}</dd><dt>Total sampled distance / climb</dt><dd>{numeric(result.summary.distanceM / 1000, 'km')} / {numeric(result.summary.climbM, 'm')}</dd><dt>Energy</dt><dd>{result.energyFeasibility.reasons.join(' ') || result.energyFeasibility.status}</dd></dl>
+      <ComparisonCards results={results} selected={scenarioIndex} requiredMarginDb={mission.constraints.requiredMarginDb} onSelect={index => { setScenarioIndex(index); onScenario(results[index] ?? null); onInspect(0); }} />
       {result.rfFeasibility.reasons.map((reason) => <p key={reason}>{reason}</p>)}
       {result.constraintViolations.length > 0 && <p>{result.constraintViolations.length} evaluated constraint violations. {result.constraintViolations[0]!.reason}</p>}
       <label>Inspect route sample<input aria-label="Inspect route sample" type="range" min={0} max={result.routeSamples.length - 1} value={sampleIndex} onChange={(e) => onInspect(Number(e.target.value))} /></label>

@@ -1,6 +1,7 @@
 import { parseWorkerRequest, parseWorkerResponse } from '../contracts/worker';
 import type { WorkerRequest, WorkerResponse } from '../contracts/worker';
 type JobRequest = Exclude<WorkerRequest, { type: 'cancel' }>;
+type JobInput = { [K in JobRequest['type']]: Omit<Extract<JobRequest, { type: K }>, 'jobId' | 'protocolVersion'> }[JobRequest['type']];
 export interface JobContext {
   readonly jobId: string;
   checkpoint: () => Promise<void>;
@@ -54,12 +55,12 @@ export class JobClient {
     if (message.jobId !== this.activeId) return;
     if (message.type === 'result' && message.refinement === 'coarse') this.receive(message);
     else {
-      if (['result', 'error', 'cancelled', 'no-route'].includes(message.type)) this.activeId = null;
+      if (['result', 'view-grid', 'error', 'cancelled', 'no-route'].includes(message.type)) this.activeId = null;
       this.receive(message);
     }
   };
   constructor(private readonly port: WorkerPort, private readonly receive: (message: WorkerResponse) => void) { port.addEventListener('message', this.listener); }
-  start(request: Omit<JobRequest, 'jobId' | 'protocolVersion'>) {
+  start(request: JobInput) {
     this.cancel();
     const jobId = `job-${++this.counter}`; this.activeId = jobId;
     this.port.postMessage(parseWorkerRequest({ ...request, protocolVersion: 1, jobId }), []);

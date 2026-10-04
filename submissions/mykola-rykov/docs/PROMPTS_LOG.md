@@ -80,3 +80,22 @@ Step 9: openscpec correctly implicitly picked up the vercel-react-best-practices
 "The local tile loader is complete, bringing progress to **9/48**. It checks streamed byte counts and checksums before caching, with a 32 MiB cache limit. I’m now connecting the built package to the terrain viewer and adding browser checks for coordinate placement, view switching, and the WebGL2 fallback. I’m using the React best-practices skill for these interface changes."
 
 ---
+
+Asked the agent to bump the benchmark test laptop RAM requirement from 16GB to 24GB to match what I have on my machine.
+
+$openspec-apply-change
+
+---
+
+`pnpm check` and all six browser tests pass.
+
+Multirotor integration needs two choices:
+
+- Cruise airspeed: editable value or optimization from the power table?
+- Added drag: editable propulsion efficiency or measured power corrections?
+
+I recommend editable values for both.
+
+Paused under the OpenSpec apply skill (.codex/skills/openspec-apply-change/SKILL.md): “If implementation reveals issues, pause and suggest artifact updates.” These inputs are missing from the current design and mission contract.
+
+---

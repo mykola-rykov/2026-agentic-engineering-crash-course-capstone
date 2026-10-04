@@ -12,6 +12,7 @@ import { newMission } from './mission/defaults';
 import type { MissionConfig } from './contracts/mission';
 
 const Scene = lazy(() => import('./scene/Scene'));
+const RfViews = lazy(() => import('./mission/RfViews'));
 const registrySchema = z.object({ schemaVersion: z.literal(1), regions: z.array(z.object({ id: z.string(), name: z.string(), manifestPath: z.string().regex(/^\.\/terrain\/[a-zA-Z0-9._-]+\/manifest\.json$/) })) });
 export default function App() {
   const [metric, setMetric] = useState<'margin' | 'power'>('margin');
@@ -69,7 +70,8 @@ export default function App() {
           <dl><dt>Coverage</dt><dd>{((manifest.projectedBounds.maxXM - manifest.projectedBounds.minXM) / 1000).toFixed(1)} × {((manifest.projectedBounds.maxYM - manifest.projectedBounds.minYM) / 1000).toFixed(1)} km</dd><dt>Grid / source resolution</dt><dd>{manifest.levels[0]!.cellSizeM} m / {manifest.sources[0]!.nominalResolutionM} m nominal</dd><dt>Surface / vertical reference</dt><dd>DSM · {manifest.verticalDatum.id}</dd></dl>
           <details><summary>Terrain attribution and accuracy</summary>{manifest.attribution.map((line) => <p key={line}>{line}</p>)}<p>{manifest.sources[0]!.accuracyDescription}</p></details>
           {mission && store && <><Editor mission={mission} store={store} onChange={setMission} /><Configuration mission={mission} terrain={manifest} onChange={setMission} /><AnalysisPanel mission={mission} store={store} sampleIndex={sampleIndex} onInspect={setSampleIndex} onScenario={setRoute} /></>}
-          <p>Click terrain or enter coordinates. Choose mission geometry, then inspect the manual-route RF estimate. Energy and routing remain under implementation.</p>
+          <Suspense fallback={<p>Loading coverage controls…</p>}>{mission && store && <RfViews mission={mission} store={store} route={route} metric={metric} />}</Suspense>
+          <p>Click terrain or enter coordinates. Choose mission geometry, analyse radio and aircraft energy, and compare selected equipment. Automatic routing remains under implementation.</p>
         </> : <p>Install a regional package using the documented local installation command.</p>}
       </div>
       <div className="scene-panel">{store ? <><div className="view-controls"><button aria-pressed={mode === 'perspective'} onClick={() => setMode('perspective')}>Perspective</button><button aria-pressed={mode === 'top'} onClick={() => setMode('top')}>Top-down</button></div><div className="metric-controls"><button aria-pressed={metric === 'margin'} onClick={() => setMetric('margin')}>Margin colours</button><button aria-pressed={metric === 'power'} onClick={() => setMetric('power')}>Received power colours</button></div><Suspense fallback={<p role="status">Loading viewer…</p>}><Scene key={store.manifest.id + store.manifest.packageVersion} store={store} mode={mode} selected={selected} route={route} metric={metric} requiredMarginDb={mission?.constraints.requiredMarginDb ?? 10} sampleIndex={sampleIndex} onInspect={setSampleIndex} onPick={(point) => { void place(point); }} /></Suspense></> : <p className="placeholder">Your terrain workspace</p>}</div>

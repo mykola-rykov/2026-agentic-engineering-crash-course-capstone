@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AmbientLight, BufferAttribute, BufferGeometry, Color, ConeGeometry, Line, LineBasicMaterial, DirectionalLight, LOD, Mesh, MeshLambertMaterial, PerspectiveCamera, Raycaster, Scene as ThreeScene, Vector2, WebGLRenderer } from 'three';
+import { metricColor } from './scales';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { TerrainStore } from '../terrain/store';
 import { createProjection } from '../terrain/coordinates';
@@ -95,8 +96,8 @@ export default function Scene({ store, mode, selected, onPick, route, sampleInde
     route.routeSamples.forEach((sample, index) => {
       const point = projection.forward(sample.position); positions.set([point.xM / 1000, sample.altitude.metres * .003, -point.yM / 1000], index * 3);
       const margin = sample.uplink && sample.downlink ? Math.min(sample.uplink.availableMarginDb, sample.downlink.availableMarginDb) : null;
-      const value = sample.clearance.status === 'unknown' ? null : metric === 'margin' ? margin === null ? null : margin - requiredMarginDb : sample.uplink && sample.downlink ? Math.min(sample.uplink.receivedPowerDbm, sample.downlink.receivedPowerDbm) + 100 : null;
-      const color = new Color(value === null ? '#89969e' : value < 0 ? '#e36e6e' : value < 10 ? '#e0c88e' : '#8ac6bb'); colors.set([color.r, color.g, color.b], index * 3);
+      const value = sample.clearance.status === 'unknown' ? null : metric === 'margin' ? margin : sample.uplink && sample.downlink ? Math.min(sample.uplink.receivedPowerDbm, sample.downlink.receivedPowerDbm) : null;
+      const color = new Color(metricColor(value, metric, requiredMarginDb)); colors.set([color.r, color.g, color.b], index * 3);
     });
     const geometry = new BufferGeometry(); geometry.setAttribute('position', new BufferAttribute(positions, 3)); geometry.setAttribute('color', new BufferAttribute(colors, 3));
     const line = new Line(geometry, new LineBasicMaterial({ vertexColors: true })); current.scene.add(line); current.routeLine = line;
