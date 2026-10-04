@@ -1,0 +1,2 @@
+import { defineConfig } from '@playwright/test';
+export default defineConfig({ testDir: './browser', workers: 1, timeout: 60_000, use: { baseURL: 'http://127.0.0.1:4173', viewport: { width: 1440, height: 1000 }, launchOptions: { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] } }, webServer: { command: 'node scripts/serve.mjs dist 4173', url: 'http://127.0.0.1:4173', reuseExistingServer: false } });

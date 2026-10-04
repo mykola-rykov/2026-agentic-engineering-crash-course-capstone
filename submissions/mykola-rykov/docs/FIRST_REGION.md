@@ -32,4 +32,6 @@ The regional configuration retains the required modified-data attribution notice
 
 ## Current implementation boundary
 
-No elevation files have been downloaded and no terrain package has been built. The current environment has Python 3.9 but lacks `gdalwarp`, `gdalinfo`, and the `osgeo` Python bindings. Task 1.4 requires a working Python/GDAL environment to build and verify even its small reprojection fixture. Region selection and the acquisition inventory are complete independently of that setup.
+The first package is built and validated at `terrain/packages/alpine-adriatic/`: **379,354,027 uncompressed bytes**, six overview levels, and 7,334 x 7,334 base cells at 30 m spacing. Grid rounding produces an actual 220,020 x 220,020 m footprint. All base cells have source-backed validity; this is not independent terrain-accuracy validation. The build uses twelve GLO-30 tiles intersecting the actual footprint and bundles local Natural Earth coastline, country boundaries, and selected places. The twenty-cell conservative inventory remains available for acquisition coverage.
+
+The environment now has Homebrew GDAL 3.13.3 and compatible Python bindings. `scripts/terrain-python.mjs` locates that interpreter; `TERRAIN_PYTHON` can select another compatible environment. Numerical staging and binary/package validators are included in `pnpm check` fixtures. Source inputs, intermediate rasters, and generated packages are ignored by git; `docs/REGION_VALIDATION.json` records measured acceptance evidence.

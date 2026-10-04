@@ -1,0 +1,44 @@
+{
+  "id": "alpine-adriatic",
+  "uncompressedBytes": 379354027,
+  "levels": 6,
+  "status": "valid",
+  "knownCellFraction": 1.0,
+  "widthCells": 7334,
+  "heightCells": 7334,
+  "packageVersion": "1",
+  "projection": {
+    "definition": "+proj=aeqd +lat_0=46.20572222222222 +lon_0=13.689916666666667 +datum=WGS84 +units=m +no_defs",
+    "horizontalDatum": "WGS84",
+    "units": "metres"
+  },
+  "bounds": {
+    "westDeg": 12.238553907218972,
+    "eastDeg": 15.141543250453992,
+    "southDeg": 45.20716540676148,
+    "northDeg": 47.19524234127288,
+    "crossesAntimeridian": false
+  },
+  "projectedBounds": {
+    "minXM": -110000.0,
+    "maxXM": 110020.0,
+    "minYM": -110020.0,
+    "maxYM": 110000.0
+  },
+  "verticalDatum": {
+    "id": "EGM2008",
+    "description": "EGM2008 orthometric metre heights; DSM surface"
+  },
+  "baseCellSizeM": 30,
+  "sourceTileCount": 12,
+  "sourceBytes": 491069004,
+  "contextLayers": [
+    "ne_10m_coastline",
+    "ne_10m_admin_0_boundary_lines_land",
+    "ne_10m_populated_places_simple"
+  ],
+  "limitations": [
+    "Source-backed validity is not independent terrain-accuracy validation.",
+    "Package data is generated locally and ignored by git; acquisition/build commands reproduce it."
+  ]
+}

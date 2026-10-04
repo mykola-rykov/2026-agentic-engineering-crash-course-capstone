@@ -7,14 +7,14 @@ All items describe future implementation and remain unchecked. Follow the five d
 - [x] 1.1 Scaffold TypeScript/Vite/React/Three.js and a static build; establish `pnpm check` for type checks, code quality, and automated validation, and verify a clean install, build, and check pass.
 - [x] 1.2 Define versioned terrain manifest, mission, result, and worker message contracts with explicit units, validity, coordinate/vertical references, and feasibility states; verify valid fixtures and invalid/unsupported-version rejection cases.
 - [x] 1.3 Select and record first-region bounds, projection, source tiles, datum, ocean-identification source, and required attribution; verify the acquisition inventory covers intended station-to-aircraft paths and explicitly marks gaps or coarser fallback.
-- [ ] 1.4 Establish the Python/GDAL package builder with mosaicking/reprojection and reproducible setup instructions; verify a small source fixture builds using the documented commands.
-- [ ] 1.5 Emit signed 16-bit metre 256 x 256 tiles, smooth display grids, maximum-preserving obstruction grids, masks, and halved overviews; verify narrow-ridge preservation, negative elevations, and missing-land/known-ocean fixtures.
-- [ ] 1.6 Add manifest generation, checksums, provenance/attribution, and uncompressed byte-budget validation; verify corruption/version rejection and failure at 500,000,000 bytes including regional context.
-- [ ] 1.7 Implement regional coordinate transforms, datum compatibility, and tile seam handling; verify seam, antimeridian, high-latitude, and incompatible-datum fixtures before RF work uses sampling.
-- [ ] 1.8 Build the selected approximately 220 x 220 km regional package and bundle Natural Earth context; verify measured output is below the size cap and the manifest accurately reports actual coverage/resolution.
-- [ ] 1.9 Implement local tile loading and bounded cache eviction; verify repeated navigation releases inactive tiles and invalid/corrupt tiles cannot enter analysis.
-- [ ] 1.10 Implement one WebGL2 scene with grayscale terrain, fixed lighting, distance-based detail, top-down/perspective modes, coordinate entry, and coverage metadata; verify placement/view switching and the unsupported-WebGL2 message.
-- [ ] 1.11 Establish the worker job-id/progress/cancel lifecycle and transferable-array ownership; verify cancellation is processed during batched work and superseded progress/results never overwrite current state.
+- [x] 1.4 Establish the Python/GDAL package builder with mosaicking/reprojection and reproducible setup instructions; verify a small source fixture builds using the documented commands.
+- [x] 1.5 Emit signed 16-bit metre 256 x 256 tiles, smooth display grids, maximum-preserving obstruction grids, masks, and halved overviews; verify narrow-ridge preservation, negative elevations, and missing-land/known-ocean fixtures.
+- [x] 1.6 Add manifest generation, checksums, provenance/attribution, and uncompressed byte-budget validation; verify corruption/version rejection and failure at 500,000,000 bytes including regional context.
+- [x] 1.7 Implement regional coordinate transforms, datum compatibility, and tile seam handling; verify seam, antimeridian, high-latitude, and incompatible-datum fixtures before RF work uses sampling.
+- [x] 1.8 Build the selected approximately 220 x 220 km regional package and bundle Natural Earth context; verify measured output is below the size cap and the manifest accurately reports actual coverage/resolution.
+- [x] 1.9 Implement local tile loading and bounded cache eviction; verify repeated navigation releases inactive tiles and invalid/corrupt tiles cannot enter analysis.
+- [x] 1.10 Implement one WebGL2 scene with grayscale terrain, fixed lighting, distance-based detail, top-down/perspective modes, coordinate entry, and coverage metadata; verify placement/view switching and the unsupported-WebGL2 message.
+- [x] 1.11 Establish the worker job-id/progress/cancel lifecycle and transferable-array ownership; verify cancellation is processed during batched work and superseded progress/results never overwrite current state.
 - [ ] 1.12 Bundle all runtime dependencies/assets and provide a development static launcher; verify a clean viewer starts with external networking blocked, document package installation and surface/datum semantics, and pass `pnpm check` for this stage.
 
 ## 2. Stage 2 - Mission editing and manual-route RF

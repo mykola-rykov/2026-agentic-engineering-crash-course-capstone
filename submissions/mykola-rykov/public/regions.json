@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "regions": [
+    {
+      "id": "alpine-adriatic",
+      "name": "Alpine-Adriatic launch region",
+      "manifestPath": "./terrain/alpine-adriatic/manifest.json"
+    }
+  ]
+}

@@ -60,3 +60,23 @@ Implementation can begin with `$openspec-apply-change offline-rf-flight-planner`
 $openspec-apply-change offline-rf-flight-planner
 
 ---
+
+Completed **3/48 tasks**:
+
+- React/Three.js scaffold and static build.
+- Versioned, validated data contracts.
+- First-region configuration and inventory (docs/FIRST_REGION.md) centered on your coordinates: 20 listed GLO-30 tiles, no listed gaps.
+
+**`pnpm check` passes**, including 13 tests. OpenSpec strict validation passes.
+
+Task 1.4 needs GDAL, which is absent. Should I use an existing installation you provide, or set up a project-local environment?
+
+I’m pausing because the apply skill (.codex/skills/openspec-apply-change/SKILL.md) explicitly requires: “Error or blocker encountered → report and wait for guidance.”
+
+---
+
+Step 9: openscpec correctly implicitly picked up the vercel-react-best-practices skill when it started to work on React components!
+
+"The local tile loader is complete, bringing progress to **9/48**. It checks streamed byte counts and checksums before caching, with a 32 MiB cache limit. I’m now connecting the built package to the terrain viewer and adding browser checks for coordinate placement, view switching, and the WebGL2 fallback. I’m using the React best-practices skill for these interface changes."
+
+---
