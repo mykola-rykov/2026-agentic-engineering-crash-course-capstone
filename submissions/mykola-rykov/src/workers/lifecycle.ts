@@ -42,7 +42,7 @@ export class JobRunner {
 }
 
 export interface WorkerPort {
-  postMessage: (message: WorkerRequest, transfers?: Transferable[]) => void;
+  postMessage: (message: WorkerRequest, transfers: Transferable[]) => void;
   addEventListener: (type: 'message', listener: (event: MessageEvent) => void) => void;
   removeEventListener: (type: 'message', listener: (event: MessageEvent) => void) => void;
 }
@@ -62,11 +62,11 @@ export class JobClient {
   start(request: Omit<JobRequest, 'jobId' | 'protocolVersion'>) {
     this.cancel();
     const jobId = `job-${++this.counter}`; this.activeId = jobId;
-    this.port.postMessage(parseWorkerRequest({ ...request, protocolVersion: 1, jobId }));
+    this.port.postMessage(parseWorkerRequest({ ...request, protocolVersion: 1, jobId }), []);
     return jobId;
   }
   cancel() {
-    if (this.activeId) this.port.postMessage({ protocolVersion: 1, jobId: this.activeId, type: 'cancel' });
+    if (this.activeId) this.port.postMessage({ protocolVersion: 1, jobId: this.activeId, type: 'cancel' }, []);
     this.activeId = null;
   }
   dispose() { this.cancel(); this.port.removeEventListener('message', this.listener); }

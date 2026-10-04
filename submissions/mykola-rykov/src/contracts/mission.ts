@@ -5,7 +5,7 @@ const gainPatternSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('isotropic'), gainDbi: finite }),
   z.strictObject({ kind: z.literal('sampled'), samples: z.array(z.strictObject({
     azimuthDeg: degrees, elevationDeg: finite.min(-90).max(90), gainDbi: finite,
-  })).min(1), interpolation: z.literal('linear') }),
+  })).min(1).refine((samples) => new Set(samples.map((s) => `${s.azimuthDeg}:${s.elevationDeg}`)).size === samples.length, 'Pattern sample directions must be unique.'), interpolation: z.literal('linear') }),
 ]);
 const antennaSchema = z.strictObject({
   id: identifier, name: text, calibration: z.enum(['illustrative', 'measured']), provenance: text,

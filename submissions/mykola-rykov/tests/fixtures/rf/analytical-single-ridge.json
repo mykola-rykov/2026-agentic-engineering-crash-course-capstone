@@ -1,0 +1,22 @@
+{
+  "source": "Hand calculation from ITU-R P.526-15 equations 31, 49-57 and 66; smooth/spherical corrections zero for this high-terminal short path",
+  "distanceM": [
+    0,
+    500,
+    1000
+  ],
+  "terrainHeightM": [
+    0,
+    150,
+    0
+  ],
+  "transmitterHeightDatumM": 100,
+  "receiverHeightDatumM": 100,
+  "frequencyHz": 1000000000,
+  "effectiveEarthRadiusM": 8500000,
+  "speedOfLightMps": 300000000,
+  "expectedV": 8.167367269809402,
+  "expectedKnifeEdgeLossDb": 31.088410831468067,
+  "expectedDeltaBullingtonLossDb": 41.0520972032907,
+  "toleranceDb": 1e-06
+}

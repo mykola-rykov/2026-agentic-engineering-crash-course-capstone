@@ -24,3 +24,38 @@ test('unsupported WebGL2 is explicit', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('alert')).toContainText('WebGL2 is required');
 });
+test('mission editor counts a return and exposes edge coverage', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Add waypoint' })).toBeVisible();
+  await page.getByLabel('Destination latitude', { exact: true }).fill('46.20307675');
+  await page.getByLabel('Destination longitude', { exact: true }).fill('14.46723808');
+  await page.getByLabel('Flight mode', { exact: true }).selectOption('return');
+  await expect(page.getByTestId('mission-distance')).toContainText('Distance limit exceeded');
+  await page.getByRole('button', { name: 'Add waypoint' }).click();
+  await expect(page.getByLabel('Waypoint 1 latitude', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Remove waypoint 1' }).click();
+  await expect(page.getByLabel('Waypoint 1 latitude', { exact: true })).toHaveCount(0);
+  await page.getByLabel('Launch latitude', { exact: true }).fill('46.197');
+  await page.getByLabel('Launch longitude', { exact: true }).fill('15.10');
+  await expect(page.getByTestId('edge-coverage')).toContainText('Limited coverage');
+});
+test('independent radios, required inputs and invalid import preserve the mission', async ({ page }) => {
+  await page.goto('/');
+  await page.getByText('Aircraft, radio and constraints', { exact: true }).click();
+  await expect(page.getByLabel('Required two-way margin (dB)', { exact: true })).toHaveValue('10');
+  await expect(page.getByLabel('Battery reserve (%)', { exact: true })).toHaveValue('20');
+  await page.getByLabel('uplink receiver sensitivity (dBm)', { exact: true }).fill('-111');
+  await expect(page.getByLabel('downlink receiver sensitivity (dBm)', { exact: true })).toHaveValue('-100');
+  await expect(page.getByText('Required before routing:', { exact: false })).toContainText('minimum altitude');
+  await page.getByText('Complete mission configuration and files', { exact: true }).click();
+  await page.getByRole('button', { name: 'Load configuration into editor' }).click();
+  const input = page.getByLabel('Mission JSON', { exact: true }), text = await input.inputValue();
+  const invalid = JSON.parse(text); invalid.schemaVersion = 2;
+  await input.fill(JSON.stringify(invalid)); await page.getByRole('button', { name: 'Apply configuration' }).click();
+  await expect(page.getByRole('alert')).toContainText('schemaVersion');
+  await expect(page.getByLabel('uplink receiver sensitivity (dBm)', { exact: true })).toHaveValue('-111');
+  await input.fill(text); await page.getByRole('button', { name: 'Apply configuration' }).click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  const downloadPromise = page.waitForEvent('download'); await page.getByRole('button', { name: 'Export mission JSON' }).click();
+  const download = await downloadPromise; expect(download.suggestedFilename()).toBe('mission.json');
+});

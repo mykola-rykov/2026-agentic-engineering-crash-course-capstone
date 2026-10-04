@@ -15,19 +15,19 @@ All items describe future implementation and remain unchecked. Follow the five d
 - [x] 1.9 Implement local tile loading and bounded cache eviction; verify repeated navigation releases inactive tiles and invalid/corrupt tiles cannot enter analysis.
 - [x] 1.10 Implement one WebGL2 scene with grayscale terrain, fixed lighting, distance-based detail, top-down/perspective modes, coordinate entry, and coverage metadata; verify placement/view switching and the unsupported-WebGL2 message.
 - [x] 1.11 Establish the worker job-id/progress/cancel lifecycle and transferable-array ownership; verify cancellation is processed during batched work and superseded progress/results never overwrite current state.
-- [ ] 1.12 Bundle all runtime dependencies/assets and provide a development static launcher; verify a clean viewer starts with external networking blocked, document package installation and surface/datum semantics, and pass `pnpm check` for this stage.
+- [x] 1.12 Bundle all runtime dependencies/assets and provide a development static launcher; verify a clean viewer starts with external networking blocked, document package installation and surface/datum semantics, and pass `pnpm check` for this stage.
 
 ## 2. Stage 2 - Mission editing and manual-route RF
 
-- [ ] 2.1 Implement region/launch/destination/waypoint editing, one-way/return distance accounting, and one fixed launch-point station; verify 60 km out plus 60 km back violates a 100 km limit and edge launches expose limited coverage.
-- [ ] 2.2 Implement aircraft/radio/antenna inputs, fixed pointing, independent directional powers/sensitivities, constraints, uncertainty, and explicit defaults; verify one-way, zero wind, 20% reserve, adjustable 10 dB margin, and required altitude/clearance inputs.
-- [ ] 2.3 Implement versioned mission JSON import/export with configuration and terrain/model references; verify round-trip reproduction and actionable rejection of unsupported versions/invalid numbers without replacing the active mission.
-- [ ] 2.4 Pin the selected P.525/P.526 editions and equations, units, tolerances, and independently sourced single/multiple-ridge fixtures; deliver a numerical-reference document and verify fixtures are independent of the implementation being tested.
-- [ ] 2.5 Implement full radio-ray terrain sampling with validity and curvature default k = 4/3; verify a gap away from the route makes analysis indeterminate and a 100 km fixture shows the documented curvature difference.
-- [ ] 2.6 Implement free-space attenuation and delta-Bullington diffraction; verify flat analytical and independent single/multiple-ridge cases within recorded tolerances and reject frequencies outside 100 MHz-6 GHz.
-- [ ] 2.7 Implement first-Fresnel-zone/60% clearance and limiting-obstruction evidence; verify threshold crossings alter clearance without adding an arbitrary Fresnel penalty to the RF budget.
-- [ ] 2.8 Implement gain coordinate frames, heading/climb/bank rotations, fixed ground pointing, and polarization/cable/installation losses; verify beam departure and reverse heading change the expected antenna gains.
-- [ ] 2.9 Compose separate directional budgets, uncertainty, and weaker-link feasibility; verify asymmetry, exact expected 3 dB power effects, and explicit unknown-data status.
+- [x] 2.1 Implement region/launch/destination/waypoint editing, one-way/return distance accounting, and one fixed launch-point station; verify 60 km out plus 60 km back violates a 100 km limit and edge launches expose limited coverage.
+- [x] 2.2 Implement aircraft/radio/antenna inputs, fixed pointing, independent directional powers/sensitivities, constraints, uncertainty, and explicit defaults; verify one-way, zero wind, 20% reserve, adjustable 10 dB margin, and required altitude/clearance inputs.
+- [x] 2.3 Implement versioned mission JSON import/export with configuration and terrain/model references; verify round-trip reproduction and actionable rejection of unsupported versions/invalid numbers without replacing the active mission.
+- [x] 2.4 Pin the selected P.525/P.526 editions and equations, units, tolerances, and independently sourced single/multiple-ridge fixtures; deliver a numerical-reference document and verify fixtures are independent of the implementation being tested.
+- [x] 2.5 Implement full radio-ray terrain sampling with validity and curvature default k = 4/3; verify a gap away from the route makes analysis indeterminate and a 100 km fixture shows the documented curvature difference.
+- [x] 2.6 Implement free-space attenuation and delta-Bullington diffraction; verify flat analytical and independent single/multiple-ridge cases within recorded tolerances and reject frequencies outside 100 MHz-6 GHz.
+- [x] 2.7 Implement first-Fresnel-zone/60% clearance and limiting-obstruction evidence; verify threshold crossings alter clearance without adding an arbitrary Fresnel penalty to the RF budget.
+- [x] 2.8 Implement gain coordinate frames, heading/climb/bank rotations, fixed ground pointing, and polarization/cable/installation losses; verify beam departure and reverse heading change the expected antenna gains.
+- [x] 2.9 Compose separate directional budgets, uncertainty, and weaker-link feasibility; verify asymmetry, exact expected 3 dB power effects, and explicit unknown-data status.
 - [ ] 2.10 Add worker-based manual-route analysis and version-aware bounded profile/propagation caching; verify progress/cancel behavior and reuse for power-only changes with unchanged results.
 - [ ] 2.11 Implement route power/margin colours and point inspection of terrain, Fresnel, obstruction, and both links; verify low-margin/unknown samples expose evidence, document model scope and uncertainty, and pass `pnpm check` for this stage.
 

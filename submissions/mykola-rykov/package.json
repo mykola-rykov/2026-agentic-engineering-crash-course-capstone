@@ -23,6 +23,7 @@
     "check": "tsc --noEmit && pnpm lint && pnpm test && pnpm build && node scripts/validate-build.mjs"
   },
   "dependencies": {
+    "delaunator": "^5.0.1",
     "proj4": "^2.19.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -30,6 +31,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@types/delaunator": "^5.0.3",
     "@playwright/test": "^1.56.0",
     "@eslint/js": "^9.0.0",
     "@types/node": "^24.0.0",

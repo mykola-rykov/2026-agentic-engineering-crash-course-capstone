@@ -28,3 +28,17 @@ input { display: block; width: 100%; margin-top: 6px; padding: 10px; background:
 dt { color: #8ac6bb; font-size: 12px; margin-top: 14px; }
 dd { margin: 4px 0; font-size: 14px; }
 summary { cursor: pointer; color: #a7b8c0; font-size: 13px; }
+
+select { width: 100%; margin-top: 6px; padding: 10px; background: #0e191f; color: #e3ecef; border: 1px solid #557783; border-radius: 4px; font: inherit; }
+fieldset { border: 1px solid #2c414b; margin: 16px 0; padding: 12px; }
+legend { color: #8ac6bb; font-size: 13px; }
+.mission-editor { margin-top: 20px; }
+.region-panel { max-height: 850px; overflow-y: auto; }
+
+textarea { width: 100%; background: #0e191f; color: #e3ecef; border: 1px solid #557783; padding: 10px; font: 12px monospace; }
+details { margin-top: 16px; }
+
+.metric-controls { position: absolute; top: 58px; right: 16px; z-index: 2; display: flex; gap: 8px; }
+.metric-controls button { padding: 8px; margin: 0; font-size: 12px; }
+progress { width: 100%; display: block; margin-top: 8px; accent-color: #8ac6bb; }
+.analysis-panel { margin-top: 20px; }
