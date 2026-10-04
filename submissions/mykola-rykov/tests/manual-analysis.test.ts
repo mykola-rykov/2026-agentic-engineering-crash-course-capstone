@@ -80,6 +80,26 @@ test('complete straight manual mission integrates timing, energy and user constr
   expect(reserve.energyFeasibility.status).toBe('infeasible');
   expect(reserve.constraintViolations.some(v => v.constraint === 'battery-reserve')).toBe(true);
 });
+test('reproduced climb-to-descent waypoint retains diagnostics but is infeasible', async () => {
+  const { mission, store } = fixture();
+  mission.aircraft = illustrativeAircraft('fixed-wing');
+  mission.launch.position = createProjection(store.manifest).inverse({ xM: 15, yM: 4665 });
+  mission.launch.altitude = { metres: 100, reference: 'datum', datumId: store.manifest.verticalDatum.id };
+  mission.waypoints = [{ position: createProjection(store.manifest).inverse({ xM: 1015, yM: 4665 }), altitude: { ...mission.launch.altitude, metres: 200 } }];
+  mission.destination = { position: createProjection(store.manifest).inverse({ xM: 2015, yM: 4665 }), altitude: { ...mission.launch.altitude } };
+  mission.constraints.minimumAltitude = { ...mission.launch.altitude, metres: 50 };
+  mission.constraints.maximumAltitude = { ...mission.launch.altitude, metres: 500 };
+  mission.constraints.minimumTerrainClearanceM = 20;
+  const result = (await analyzeMission(mission, store, context()))[0]!;
+  expect(result.rfFeasibility.status).toBe('feasible');
+  expect(result.energyFeasibility.status).toBe('infeasible');
+  expect(result.feasibility.status).toBe('infeasible');
+  expect(result.summary.energy).not.toBeNull();
+  const corner = result.constraintViolations.find(v => v.constraint === 'motion');
+  expect(corner).toBeDefined(); expect(corner!.sampleIndex).toBeGreaterThan(0); expect(corner!.sampleIndex).toBeLessThan(result.routeSamples.length);
+  expect(corner!.reason).toContain('three-dimensional'); expect(corner!.reason).toContain('finite transition');
+  expect(JSON.stringify(result)).toContain(corner!.reason);
+});
 test('multiple equipment scenarios reuse propagation and do not change other results', async () => {
   const { mission, store } = fixture(); mission.aircraft = illustrativeAircraft('fixed-wing');
   const second = structuredClone(mission.equipment[0]!); second.id = 'second'; second.downlink.transmitPowerDbm += 3;

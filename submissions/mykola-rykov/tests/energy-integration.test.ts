@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { newMission } from '../src/mission/defaults';
 import { illustrativeAircraft } from '../src/energy/profiles';
-import { evaluateRouteEnergy, integrateConstantPowerWh, radioInputPowerW, segmentMotion, reserveFeasibility } from '../src/energy/integration';
+import { evaluateRouteEnergy, integrateConstantPowerWh, manualCornerSamples, radioInputPowerW, segmentMotion, reserveFeasibility } from '../src/energy/integration';
 import { terrainFixture } from './fixtures/contracts';
 const start = { xM: 0, yM: 0, altitudeM: 100, headingDeg: 90, pitchDeg: 0, leg: 'outbound' as const };
 const end = { ...start, xM: 18_000 };
@@ -70,4 +70,38 @@ test('return energy totals both legs; reserve boundary and impossible motion are
   mission.wind = { speedMps: 11, fromDirectionDeg: 90 };
   const impossible = evaluateRouteEnergy(mission, mission.equipment[0]!, [start, to]);
   expect(impossible.durationS).toBeNull(); expect(impossible.energy).toBeNull(); expect(impossible.feasibility.status).toBe('infeasible');
+});
+test('manual motion validation detects vertical corners for both aircraft classes', () => {
+  for (const kind of ['fixed-wing', 'multirotor'] as const) {
+    const mission = fixture(); mission.aircraft = illustrativeAircraft(kind);
+    const points = [
+      { ...start, xM: 0, altitudeM: 100 },
+      { ...start, xM: 1000, altitudeM: 200 },
+      { ...start, xM: 2000, altitudeM: 100 },
+    ];
+    const result = evaluateRouteEnergy(mission, mission.equipment[0]!, points);
+    expect(manualCornerSamples(points)).toEqual([1]);
+    expect(result.energy).not.toBeNull();
+    expect(result.violations).toContainEqual(expect.objectContaining({ constraint: 'motion', sampleIndex: 1 }));
+    expect(result.feasibility.status).toBe('infeasible');
+  }
+});
+test('manual motion validation covers climb-to-level, vertical reversal, and horizontal turns', () => {
+  const climbToLevel = [{ ...start, xM: 0, altitudeM: 100 }, { ...start, xM: 1000, altitudeM: 200 }, { ...start, xM: 2000, altitudeM: 200 }];
+  const verticalReversal = [{ ...start, xM: 0, altitudeM: 100 }, { ...start, xM: 0, altitudeM: 200 }, { ...start, xM: 0, altitudeM: 100 }];
+  const horizontalTurn = [{ ...start, xM: 0, yM: 0 }, { ...start, xM: 1000, yM: 0 }, { ...start, xM: 1000, yM: 1000 }];
+  expect(manualCornerSamples(climbToLevel)).toEqual([1]);
+  expect(manualCornerSamples(verticalReversal)).toEqual([1]);
+  expect(manualCornerSamples(horizontalTurn)).toEqual([1]);
+});
+test('manual corners bridge duplicate samples and ignore collinear projection noise', () => {
+  const duplicateJoin = [
+    { ...start, xM: 0, altitudeM: 100 },
+    { ...start, xM: 1000, altitudeM: 200 },
+    { ...start, xM: 1000, altitudeM: 200, leg: 'return' as const },
+    { ...start, xM: 2000, altitudeM: 100, leg: 'return' as const },
+  ];
+  const noisyCollinear = [{ ...start, xM: 0, altitudeM: 100 }, { ...start, xM: 1000, altitudeM: 200 }, { ...start, xM: 2000, yM: 1e-10, altitudeM: 300 }];
+  expect(manualCornerSamples(duplicateJoin)).toEqual([2]);
+  expect(manualCornerSamples(noisyCollinear)).toEqual([]);
 });

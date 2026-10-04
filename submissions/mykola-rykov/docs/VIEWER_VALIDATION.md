@@ -1,5 +1,11 @@
 # Stage 1 viewer evidence
 
+## Mission coordinate drafts
+
+Launch, destination, and waypoint latitude/longitude fields retain typed text while validating complete finite decimal values against inclusive latitude [-90, 90] and longitude [-180, 180] limits. Blank, incomplete, and out-of-range drafts keep the last valid mission coordinate and show a field error. While any draft is invalid, manual analysis, automatic search, RF-view calculation, and mission/result exports are unavailable; active analysis is cancelled and its results are cleared. Correct the field, remove its waypoint, or replace the mission to recover. Imports, region changes, and selected map-point assignments reset coordinate drafts; waypoint removal also removes its validation state.
+
+`pnpm test:browser browser/viewer.spec.ts` covers blank, incomplete, and out-of-range edits, boundary coordinates, action blocking and recovery, mission replacement, waypoint removal, and selected-point assignment. `tests/rf-views.test.ts` covers projection failure as a local result with an empty path and successful recomputation after geometry correction.
+
 The Alpine-Adriatic package was installed with `node scripts/install-terrain.mjs terrain/packages/alpine-adriatic` and included in a fresh production build. The package covers 220.02 × 220.02 km at a 30 m grid spacing and is 379,354,027 bytes uncompressed, including metadata and Natural Earth context.
 
 Run `pnpm browser:install` once during development setup, then `pnpm check` and `pnpm test:browser`. The latter launches Chromium in a new browser context and serves the build using the dependency-free localhost launcher. Every external browser request is blocked and recorded as a test failure. Browser downloads are a development dependency; the installed viewer never downloads a browser.

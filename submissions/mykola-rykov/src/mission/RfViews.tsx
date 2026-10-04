@@ -3,12 +3,12 @@ import type { MissionConfig } from '../contracts/mission';
 import type { ScenarioResult } from '../contracts/result';
 import type { RfView, WorkerResponse } from '../contracts/worker';
 import type { TerrainStore } from '../terrain/store';
-import { createProjection } from '../terrain/coordinates';
+import { projectRfPath } from './rf-path';
 import { JobClient } from '../workers/lifecycle';
 import { metricColor } from '../scene/scales';
 type Grid = Extract<WorkerResponse, { type: 'view-grid' }>;
-interface Props { mission: MissionConfig; store: TerrainStore; route: ScenarioResult | null; metric: 'margin' | 'power' }
-export default function RfViews({ mission, store, route, metric }: Props) {
+interface Props { mission: MissionConfig; store: TerrainStore; route: ScenarioResult | null; metric: 'margin' | 'power'; coordinatesValid: boolean }
+export default function RfViews({ mission, store, route, metric, coordinatesValid }: Props) {
   const client = useRef<JobClient | null>(null);
   const [kind, setKind] = useState<'slice' | 'heatmap'>('slice');
   const [altitudeM, setAltitudeM] = useState(1500), [minimumM, setMinimumM] = useState(500), [maximumM, setMaximumM] = useState(2500);
@@ -30,13 +30,13 @@ export default function RfViews({ mission, store, route, metric }: Props) {
     client.current?.cancel(); let live = true;
     queueMicrotask(() => { if (live) { setGrid(null); setRunning(false); setError(null); } });
     return () => { live = false; };
-  }, [mission, route, kind, altitudeM, minimumM, maximumM, headingDeg, pitchDeg, rollDeg, resolution]);
-  const path = useMemo(() => {
-    const projection = createProjection(store.manifest);
-    return route ? route.routeSamples.map(sample => ({ ...projection.forward(sample.position), altitudeM: sample.altitude.metres })) : [mission.launch, ...mission.waypoints, mission.destination].map(point => ({ ...projection.forward(point.position), altitudeM: point.altitude.metres }));
-  }, [mission, route, store]);
+  }, [mission, route, kind, altitudeM, minimumM, maximumM, headingDeg, pitchDeg, rollDeg, resolution, coordinatesValid]);
+  const projected = useMemo(() => projectRfPath(mission, route, store), [mission, route, store]);
+  const path = projected.path;
   function start() {
     try {
+      if (!coordinatesValid) throw new Error('Correct invalid mission coordinates before calculating an RF view.');
+      if (projected.error) throw new Error(`RF view geometry cannot be projected: ${projected.error}`);
       if (!client.current) throw new Error('RF view worker is preparing.');
       if (kind === 'heatmap' && !route) throw new Error('Analyze and select a route before requesting its distance–altitude heatmap.');
       const attitude = { headingDeg, pitchDeg, rollDeg };
@@ -56,7 +56,9 @@ export default function RfViews({ mission, store, route, metric }: Props) {
     <label>Assumed airborne pitch (°)<input type="number" min={-90} max={90} value={pitchDeg} onChange={event => setPitchDeg(event.target.valueAsNumber)} /></label>
     <label>Assumed airborne bank (°)<input type="number" min={-180} max={180} value={rollDeg} onChange={event => setRollDeg(event.target.valueAsNumber)} /></label>
     <p>Fixed attitude: heading {headingDeg}°, pitch {pitchDeg}°, bank {rollDeg}°. Uses {route?.equipmentId ?? mission.equipment[0]!.id}. Coverage is orientation-dependent; grey cells have missing RF evidence. The slice covers the route bounds plus the selected corridor, clipped to the package.</p>
-    <button onClick={start}>Calculate RF view</button>
+    {!coordinatesValid && <p role="status">RF view is unavailable until all mission coordinates are valid.</p>}
+    {projected.error && <p role="alert">RF view geometry cannot be projected: {projected.error}</p>}
+    <button disabled={!coordinatesValid || !!projected.error} onClick={start}>Calculate RF view</button>
     {running && <><button onClick={() => { client.current?.cancel(); setRunning(false); }}>Cancel RF view</button><progress aria-label="RF view progress" max={1} value={progress} /></>}
     {error && <p role="alert">{error}</p>}
     {grid && <section aria-label={grid.kind === 'slice' ? 'Horizontal coverage slice' : 'Route distance–altitude heatmap'}>

@@ -5,9 +5,9 @@ import type { TerrainStore } from '../terrain/store';
 import { JobClient } from '../workers/lifecycle';
 import ComparisonCards from './ComparisonCards';
 import { routeObjective } from './comparison';
-interface Props { mission: MissionConfig; store: TerrainStore; sampleIndex: number; onInspect: (index: number) => void; onScenario: (result: ScenarioResult | null) => void }
+interface Props { mission: MissionConfig; store: TerrainStore; sampleIndex: number; onInspect: (index: number) => void; onScenario: (result: ScenarioResult | null) => void; coordinatesValid: boolean }
 const numeric = (value: number | null, unit: string) => value === null ? 'Unavailable' : `${value.toFixed(2)} ${unit}`;
-export default function AnalysisPanel({ mission, store, sampleIndex, onInspect, onScenario }: Props) {
+export default function AnalysisPanel({ mission, store, sampleIndex, onInspect, onScenario, coordinatesValid }: Props) {
   const client = useRef<JobClient | null>(null);
   const [results, setResults] = useState<ScenarioResult[]>([]);
   const [scenarioIndex, setScenarioIndex] = useState(0);
@@ -32,18 +32,24 @@ export default function AnalysisPanel({ mission, store, sampleIndex, onInspect, 
     queueMicrotask(() => { if (live) { setRunning(false); setResults([]); setError(null); onScenario(null); onInspect(0); } });
     return () => { live = false; };
   }, [mission, onScenario, onInspect]);
+  useEffect(() => {
+    if (coordinatesValid) return;
+    client.current?.cancel();
+    queueMicrotask(() => { setRunning(false); setResults([]); onScenario(null); onInspect(0); });
+  }, [coordinatesValid, onScenario, onInspect]);
   function start(type: 'analyze' | 'search') {
-    try { if (!client.current) throw new Error('Analysis worker is preparing.'); client.current.start({ type, mission }); setResults([]); onScenario(null); setError(null); setProgress({ phase: 'Preparing route', fraction: 0 }); setRunning(true); }
+    try { if (!coordinatesValid) throw new Error('Correct invalid mission coordinates before analysis.'); if (!client.current) throw new Error('Analysis worker is preparing.'); client.current.start({ type, mission }); setResults([]); onScenario(null); setError(null); setProgress({ phase: 'Preparing route', fraction: 0 }); setRunning(true); }
     catch (reason) { setError(String(reason)); }
   }
   const result = results[scenarioIndex], sample = result?.routeSamples[sampleIndex];
   return <section className="analysis-panel" aria-label="Manual route analysis">
-    <button onClick={() => start('analyze')}>Analyze manual route RF</button>
-    <button onClick={() => start('search')}>Find verified route alternatives</button>
+    <button disabled={!coordinatesValid} title={!coordinatesValid ? 'Correct mission coordinates before analysis.' : undefined} onClick={() => start('analyze')}>Analyze manual route RF</button>
+    <button disabled={!coordinatesValid} title={!coordinatesValid ? 'Correct mission coordinates before analysis.' : undefined} onClick={() => start('search')}>Find verified route alternatives</button>
     {running && <><button onClick={() => { client.current?.cancel(); setRunning(false); setProgress({ phase: 'Cancelled', fraction: 0 }); }}>Cancel analysis</button><label>{progress.phase}<progress aria-label="Analysis progress" max={1} value={progress.fraction} /></label></>}
     {error && <p role="alert">{error}</p>}
     {result && <>
-      <button onClick={() => {
+      <button disabled={!coordinatesValid} title={!coordinatesValid ? 'Correct mission coordinates before exporting.' : undefined} onClick={() => {
+        if (!coordinatesValid) { setError('Correct invalid mission coordinates before exporting.'); return; }
         const blob = new Blob([JSON.stringify({ schemaVersion: 1, mission, results }, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob), anchor = document.createElement('a'); anchor.href = url; anchor.download = `${mission.id}-results.json`; anchor.click(); URL.revokeObjectURL(url);
       }}>Export scenario results JSON</button>

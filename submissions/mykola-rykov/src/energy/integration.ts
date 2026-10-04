@@ -12,6 +12,29 @@ export interface EnergyEvaluation {
   elapsedTimeS: (number | null)[]; attitudes: Attitude[];
   feasibility: ScenarioResult['energyFeasibility']; violations: ScenarioResult['constraintViolations']; assumptions: string[];
 }
+const CORNER_ANGLE_TOLERANCE_DEG = 1e-5;
+const ZERO_SEGMENT_LENGTH_M = 1e-8;
+/** Return route-sample indices at which consecutive nonzero 3D manual directions change abruptly. */
+export function manualCornerSamples(points: EnergyRoutePoint[]) {
+  const corners: number[] = [];
+  let previousDirection: { x: number; y: number; z: number } | null = null;
+  for (let index = 1; index < points.length; index++) {
+    const previous = points[index - 1]!, current = points[index]!;
+    const x = current.xM - previous.xM, y = current.yM - previous.yM, z = current.altitudeM - previous.altitudeM;
+    const length = Math.hypot(x, y, z);
+    if (length <= ZERO_SEGMENT_LENGTH_M) continue;
+    const direction = { x: x / length, y: y / length, z: z / length };
+    if (previousDirection) {
+      const crossX = previousDirection.y * direction.z - previousDirection.z * direction.y;
+      const crossY = previousDirection.z * direction.x - previousDirection.x * direction.z;
+      const crossZ = previousDirection.x * direction.y - previousDirection.y * direction.x;
+      const angleDeg = Math.atan2(Math.hypot(crossX, crossY, crossZ), previousDirection.x * direction.x + previousDirection.y * direction.y + previousDirection.z * direction.z) * 180 / Math.PI;
+      if (angleDeg > CORNER_ANGLE_TOLERANCE_DEG) corners.push(index - 1);
+    }
+    previousDirection = direction;
+  }
+  return corners;
+}
 const radians = (degrees: number) => degrees * Math.PI / 180;
 const heading = (east: number, north: number) => (Math.atan2(east, north) * 180 / Math.PI + 360) % 360;
 function rotorAttitude(model: NonNullable<Extract<MissionConfig['aircraft'], { kind: 'multirotor' }>['powerModel']>, motion: ComputedMotion, load: { massKg: number; additionalDragAreaM2: number }): Attitude {
@@ -78,6 +101,8 @@ export function evaluateRouteEnergy(mission: MissionConfig, equipment: Equipment
   const attitudes = points.map(point => ({ headingDeg: point.headingDeg, pitchDeg: point.pitchDeg, rollDeg: point.bankDeg ?? 0 }));
   const elapsedTimeS: (number | null)[] = points.map(() => null);
   const violations: EnergyEvaluation['violations'] = [];
+  const analyticRoute = points.length > 1 && points.slice(1).every(point => point.motion !== undefined);
+  if (!analyticRoute) for (const sampleIndex of manualCornerSamples(points)) violations.push({ constraint: 'motion', reason: 'A manual route corner changes three-dimensional travel direction without finite transition geometry; refine the path before accepting it.', sampleIndex });
   const assumptions = [
     'Quasi-steady aircraft power; constant air density 1.225 kg/m³; no descent/braking regeneration.',
     'Only airborne antenna mass/CdA and airborne downlink radio input draw charge the flight battery; radio idle/table input includes receiving electronics.',
@@ -94,8 +119,6 @@ export function evaluateRouteEnergy(mission: MissionConfig, equipment: Equipment
   elapsedTimeS[0] = 0;
   for (let index = 1; index < points.length; index++) {
     const a = points[index - 1]!, b = points[index]!;
-    const angleChange = Math.abs(((b.headingDeg - a.headingDeg + 540) % 360) - 180);
-    if (angleChange > 1e-5 && a.bankDeg === undefined && b.bankDeg === undefined) violations.push({ constraint: 'motion', reason: 'A sharp route corner or turnaround has no finite acceleration/turn geometry; refine the path before accepting it.', sampleIndex: index });
     const aircraft = mission.aircraft;
     try {
       const model = aircraft.powerModel!;

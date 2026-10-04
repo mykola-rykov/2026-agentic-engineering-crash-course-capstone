@@ -5,7 +5,7 @@ import type { TerrainPackageManifest } from '../contracts/terrain';
 import { illustrativeAircraft } from '../energy/profiles';
 import EquipmentSelector from './EquipmentSelector';
 import { exportMission, importMission, requiredInputs } from './files';
-interface Props { mission: MissionConfig; terrain: TerrainPackageManifest; onChange: (mission: MissionConfig) => void }
+interface Props { mission: MissionConfig; terrain: TerrainPackageManifest; coordinatesValid: boolean; onChange: (mission: MissionConfig) => void; onReplace: (mission: MissionConfig) => void }
 const modelLabels: Record<string, string> = {
   massKg: 'Aircraft mass (kg)', referenceMassKg: 'Power-table reference mass (kg)', wingAreaM2: 'Wing area (m²)',
   zeroLiftDragCoefficient: 'Zero-lift drag coefficient', inducedDragFactor: 'Induced drag factor', propulsiveEfficiency: 'Propulsive efficiency (fraction)',
@@ -16,7 +16,7 @@ const modelLabels: Record<string, string> = {
 function NumberField({ label, value, onChange, min, max }: { label: string; value: number | null; onChange: (n: number | null) => void; min?: number; max?: number }) {
   return <label>{label}<input type="number" step="any" value={value ?? ''} min={min} max={max} onChange={(e) => onChange(e.target.value === '' ? null : e.target.valueAsNumber)} /></label>;
 }
-export default function Configuration({ mission, terrain, onChange }: Props) {
+export default function Configuration({ mission, terrain, coordinatesValid, onChange, onReplace }: Props) {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const equipment = mission.equipment[0]!;
@@ -26,6 +26,7 @@ export default function Configuration({ mission, terrain, onChange }: Props) {
   const altitude = (field: 'minimumAltitude' | 'maximumAltitude', value: number | null) => update({ ...mission, constraints: { ...mission.constraints, [field]: value === null ? null : { metres: value, reference: 'datum', datumId: terrain.verticalDatum.id } } });
   function save() {
     try {
+      if (!coordinatesValid) throw new Error('Correct invalid mission coordinates before exporting.');
       const url = URL.createObjectURL(new Blob([exportMission(mission)], { type: 'application/json' }));
       const link = document.createElement('a'); link.href = url; link.download = `${mission.id}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); setError(null);
     } catch (reason) { setError(String(reason)); }
@@ -63,9 +64,10 @@ export default function Configuration({ mission, terrain, onChange }: Props) {
       <p>Edit aircraft power models, antenna patterns/polarization/mounting/mass/drag, radio modes/losses/electrical draw, and equipment combinations in this versioned configuration. Values carry units in field names.</p>
       <button onClick={() => { try { setDraft(exportMission(mission)); setError(null); } catch (reason) { setError(String(reason)); } }}>Load configuration into editor</button>
       <label>Mission JSON<textarea aria-label="Mission JSON" rows={16} value={draft} onChange={(e) => setDraft(e.target.value)} /></label>
-      <button onClick={() => { try { const next = importMission(draft, terrain); update(parseMission(next)); } catch (reason) { setError(String(reason)); } }}>Apply configuration</button>
-      <label>Import mission JSON<input type="file" accept="application/json,.json" onChange={(e) => { const file = e.target.files?.[0]; if (file) void file.text().then((text) => { try { update(importMission(text, terrain)); } catch (reason) { setError(String(reason)); } }).catch((reason: unknown) => setError(String(reason))); e.target.value = ''; }} /></label>
-      <button onClick={save}>Export mission JSON</button>
+      <button onClick={() => { try { const next = importMission(draft, terrain); onReplace(parseMission(next)); setError(null); } catch (reason) { setError(String(reason)); } }}>Apply configuration</button>
+      <label>Import mission JSON<input type="file" accept="application/json,.json" onChange={(e) => { const file = e.target.files?.[0]; if (file) void file.text().then((text) => { try { onReplace(importMission(text, terrain)); setError(null); } catch (reason) { setError(String(reason)); } }).catch((reason: unknown) => setError(String(reason))); e.target.value = ''; }} /></label>
+      <button disabled={!coordinatesValid} title={!coordinatesValid ? 'Correct mission coordinates before exporting.' : undefined} onClick={save}>Export mission JSON</button>
+      {!coordinatesValid && <p role="status">Mission export is unavailable until all mission coordinates are valid.</p>}
     </details>
     {error && <p role="alert">{error}</p>}
   </>;

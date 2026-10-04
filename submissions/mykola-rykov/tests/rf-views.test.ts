@@ -5,6 +5,7 @@ import { AnalysisCache } from '../src/rf/analysis';
 import { newMission } from '../src/mission/defaults';
 import { terrainFixture } from './fixtures/contracts';
 import { createProjection } from '../src/terrain/coordinates';
+import { projectRfPath } from '../src/mission/rf-path';
 import type { TerrainStore } from '../src/terrain/store';
 import type { JobContext } from '../src/workers/lifecycle';
 const attitude = { headingDeg: 90, pitchDeg: 0, rollDeg: 0 };
@@ -16,6 +17,15 @@ test('view coordinates, altitude rows, path distance and grid limits are explici
   expect(grid.locations[7]).toEqual({ xM: 100, yM: 0, altitudeM: 100 });
   expect(() => rfViewSchema.parse({ ...slice, columns: 64, rows: 64 })).toThrow('2048');
   expect(() => rfViewSchema.parse({ ...slice, minXM: 1000 })).toThrow('ordered');
+});
+test('RF view projection reports invalid geometry as a recoverable local result', () => {
+  const manifest = terrainFixture(), store = { manifest } as TerrainStore, mission = newMission(manifest);
+  mission.launch.position.latitudeDeg = Number.NaN;
+  const failed = projectRfPath(mission, null, store);
+  expect(failed.path).toEqual([]); expect(failed.error).toContain('Invalid input');
+  mission.launch.position.latitudeDeg = 46.2;
+  const recovered = projectRfPath(mission, null, store);
+  expect(recovered.error).toBeNull(); expect(recovered.path).toHaveLength(2);
 });
 test('RF views share validated ray propagation, preserve unknown cells and honour cancellation', async () => {
   const manifest = terrainFixture(); manifest.projectedBounds = { minXM: 0, maxXM: 7680, minYM: 0, maxYM: 7680 };

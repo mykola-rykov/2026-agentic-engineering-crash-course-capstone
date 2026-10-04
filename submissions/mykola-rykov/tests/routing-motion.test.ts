@@ -46,3 +46,11 @@ test('wind affects turn bank and sampled primitive durations/energy without bypa
   m.wind = { speedMps: 30, fromDirectionDeg: 0 };
   expect(() => samplePrimitive(primitive, m, 20)).toThrow('progress');
 });
+test('generated finite climb-to-descent transitions are not treated as manual corners', () => {
+  const mission = fixture('fixed-wing');
+  const climb = samplePrimitive({ start: { xM: 0, yM: 0, altitudeM: 400, headingDeg: 90 }, lengthM: 500, turnDeg: 0, altitudeChangeM: 30, leg: 'outbound' }, mission, 25);
+  const descent = samplePrimitive({ start: { xM: 500, yM: 0, altitudeM: 430, headingDeg: 90 }, lengthM: 500, turnDeg: 0, altitudeChangeM: -30, leg: 'outbound' }, mission, 25);
+  const result = evaluateRouteEnergy(mission, mission.equipment[0]!, [...climb, ...descent]);
+  expect(result.violations.filter(v => v.constraint === 'motion')).toEqual([]);
+  expect(result.feasibility.status).toBe('feasible');
+});
