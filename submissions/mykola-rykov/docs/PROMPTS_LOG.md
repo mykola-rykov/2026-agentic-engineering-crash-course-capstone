@@ -99,3 +99,22 @@ I recommend editable values for both.
 Paused under the OpenSpec apply skill (.codex/skills/openspec-apply-change/SKILL.md): “If implementation reveals issues, pause and suggest artifact updates.” These inputs are missing from the current design and mission contract.
 
 ---
+
+$code-reviewer Review code changes since commit cc025712bb04512c8f48dd31539fd4b238fa54e7
+
+---
+
+The review is complete with two reproduced findings. The existing `pnpm check` run passed on this unchanged application code; neither defect is covered by those checks. No files were modified.
+
+1. **title:** Clearing a mission coordinate crashes the application  
+   **file + line:** src/mission/RfViews.tsx:36  
+   **severity:** critical  
+   **evidence:** Clearing a latitude or longitude field stores `NaN` through `valueAsNumber`. The render-time call `projection.forward(point.position)` then throws a validation error, which I reproduced. No error boundary exists above this component, so React removes the application UI, losing the unsaved mission state. [React documentation (https://react.dev/reference/react/Component\#catching-rendering-errors-with-an-error-boundary)](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) confirms this behavior.  
+   **suggestion:** Keep incomplete coordinate edits as local strings, validate before updating mission coordinates, and handle projection failures without throwing during rendering.
+2. **title:** Vertical route corners incorrectly pass motion feasibility  
+   **file + line:** src/energy/integration.ts:97  
+   **severity:** major  
+   **evidence:** The corner check compares only `b.headingDeg - a.headingDeg`, ignoring changes in vertical direction. A reproduced fixed-wing route with consecutive 1 km segments climbing from 100 to 200 m and descending to 100 m returned overall `feasible` with no violations. Its pitch switches abruptly from +5.71° to −5.71°, yet it bypasses the rejection applied to horizontal corners lacking finite turn geometry.  
+   **suggestion:** Check continuity of the complete three-dimensional velocity direction at manual waypoints, and reject vertical corners until finite transition geometry is supplied.
+
+---
