@@ -1,9 +1,10 @@
 import type { MissionConfig } from '../contracts/mission';
 import type { ScenarioResult } from '../contracts/result';
 import { energyPrerequisites } from './profiles';
-import { fixedWingPower } from './fixed-wing';
+import { fixedWingPower, GRAVITY_MPS2, REFERENCE_AIR_DENSITY_KG_M3 } from './fixed-wing';
 import { multirotorPower } from './multirotor';
-export interface EnergyRoutePoint { xM: number; yM: number; altitudeM: number; headingDeg: number; pitchDeg: number; leg: 'outbound' | 'return'; bankDeg?: number }
+import type { ComputedMotion } from '../routing/motion';
+export interface EnergyRoutePoint { xM: number; yM: number; altitudeM: number; headingDeg: number; pitchDeg: number; leg: 'outbound' | 'return'; bankDeg?: number; motion?: ComputedMotion }
 type Equipment = MissionConfig['equipment'][number];
 type Attitude = ScenarioResult['routeSamples'][number]['attitude'];
 export interface EnergyEvaluation {
@@ -13,6 +14,12 @@ export interface EnergyEvaluation {
 }
 const radians = (degrees: number) => degrees * Math.PI / 180;
 const heading = (east: number, north: number) => (Math.atan2(east, north) * 180 / Math.PI + 360) % 360;
+function rotorAttitude(model: NonNullable<Extract<MissionConfig['aircraft'], { kind: 'multirotor' }>['powerModel']>, motion: ComputedMotion, load: { massKg: number; additionalDragAreaM2: number }): Attitude {
+  const mass = model.massKg + load.massKg, verticalForce = mass * (GRAVITY_MPS2 + motion.verticalAccelerationMps2);
+  const forwardForce = mass * motion.forwardAccelerationMps2 + .5 * REFERENCE_AIR_DENSITY_KG_M3 * motion.airspeedMps ** 2 * load.additionalDragAreaM2;
+  const lateralForce = mass * motion.lateralAccelerationMps2;
+  return { headingDeg: motion.headingDeg, pitchDeg: -Math.atan2(forwardForce, verticalForce) * 180 / Math.PI, rollDeg: Math.atan2(lateralForce, Math.hypot(verticalForce, forwardForce)) * 180 / Math.PI };
+}
 
 export function integrateConstantPowerWh(powerW: number, durationS: number) {
   if (!Number.isFinite(powerW) || powerW < 0 || !Number.isFinite(durationS) || durationS < 0) throw new Error('Power and duration must be finite and nonnegative.');
@@ -92,18 +99,20 @@ export function evaluateRouteEnergy(mission: MissionConfig, equipment: Equipment
     const aircraft = mission.aircraft;
     try {
       const model = aircraft.powerModel!;
-      const motion = segmentMotion(a, b, model.cruiseSpeedMps!, mission.wind, aircraft.kind, model.maxClimbMps);
+      const motion = b.motion ?? segmentMotion(a, b, model.cruiseSpeedMps!, mission.wind, aircraft.kind, model.maxClimbMps);
       attitudes[index] = { headingDeg: motion.headingDeg, pitchDeg: motion.pitchDeg, rollDeg: b.bankDeg ?? 0 };
       if (index === 1) attitudes[0] = { ...attitudes[index]! };
       let powerW: number;
       const load = { massKg: equipment.airborneAntenna.massKg, additionalDragAreaM2: equipment.airborneAntenna.additionalDragAreaM2 };
       if (aircraft.kind === 'fixed-wing') powerW = fixedWingPower(aircraft.powerModel!, { airspeedMps: motion.airspeedMps, climbMps: motion.climbMps, bankDeg: b.bankDeg ?? 0 }, load).electricalPowerW;
       else {
-        const rotor = multirotorPower(aircraft.powerModel!, { airspeedMps: motion.airspeedMps, climbMps: motion.climbMps, forwardAccelerationMps2: 0, lateralAccelerationMps2: 0, verticalAccelerationMps2: 0 }, load);
+        const rotor = multirotorPower(aircraft.powerModel!, { airspeedMps: motion.airspeedMps, climbMps: motion.climbMps, forwardAccelerationMps2: b.motion?.forwardAccelerationMps2 ?? 0, lateralAccelerationMps2: b.motion?.lateralAccelerationMps2 ?? 0, verticalAccelerationMps2: b.motion?.verticalAccelerationMps2 ?? 0 }, load);
         powerW = rotor.electricalPowerW;
-        attitudes[index] = { headingDeg: motion.headingDeg, pitchDeg: -rotor.requiredTiltDeg, rollDeg: 0 };
+        attitudes[index] = b.motion ? rotorAttitude(aircraft.powerModel!, b.motion, load) : { headingDeg: motion.headingDeg, pitchDeg: -rotor.requiredTiltDeg, rollDeg: 0 };
         if (index === 1) attitudes[0] = { ...attitudes[index]! };
       }
+      const initial = points[0]!;
+      if (index === 1 && initial.motion) attitudes[0] = aircraft.kind === 'fixed-wing' ? { headingDeg: initial.motion.headingDeg, pitchDeg: initial.motion.pitchDeg, rollDeg: initial.bankDeg ?? 0 } : rotorAttitude(aircraft.powerModel!, initial.motion, load);
       propulsionWh += integrateConstantPowerWh(powerW, motion.durationS); durationS += motion.durationS; elapsedTimeS[index] = durationS;
     } catch (reason) {
       const message = String(reason);

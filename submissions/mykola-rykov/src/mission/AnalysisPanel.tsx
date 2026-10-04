@@ -4,6 +4,7 @@ import type { ScenarioResult } from '../contracts/result';
 import type { TerrainStore } from '../terrain/store';
 import { JobClient } from '../workers/lifecycle';
 import ComparisonCards from './ComparisonCards';
+import { routeObjective } from './comparison';
 interface Props { mission: MissionConfig; store: TerrainStore; sampleIndex: number; onInspect: (index: number) => void; onScenario: (result: ScenarioResult | null) => void }
 const numeric = (value: number | null, unit: string) => value === null ? 'Unavailable' : `${value.toFixed(2)} ${unit}`;
 export default function AnalysisPanel({ mission, store, sampleIndex, onInspect, onScenario }: Props) {
@@ -17,7 +18,8 @@ export default function AnalysisPanel({ mission, store, sampleIndex, onInspect, 
     const worker = new Worker(new URL('../workers/analysis.worker.ts', import.meta.url), { type: 'module' });
     const connection = new JobClient(worker, (message) => {
       if (message.type === 'progress') setProgress({ phase: message.phase, fraction: message.fractionComplete });
-      else if (message.type === 'result') { setRunning(false); setResults(message.results); setScenarioIndex(0); onScenario(message.results[0] ?? null); onInspect(0); }
+      else if (message.type === 'result') { setRunning(message.refinement !== 'final'); setResults(message.results); setScenarioIndex(0); onScenario(message.results[0] ?? null); onInspect(0); }
+      else if (message.type === 'no-route') { setRunning(false); setResults([]); onScenario(null); setError(message.reason); }
       else if (message.type === 'error') { setRunning(false); setError(message.message); }
       else if (message.type === 'cancelled') setRunning(false);
     });
@@ -30,17 +32,22 @@ export default function AnalysisPanel({ mission, store, sampleIndex, onInspect, 
     queueMicrotask(() => { if (live) { setRunning(false); setResults([]); setError(null); onScenario(null); onInspect(0); } });
     return () => { live = false; };
   }, [mission, onScenario, onInspect]);
-  function start() {
-    try { if (!client.current) throw new Error('Analysis worker is preparing.'); client.current.start({ type: 'analyze', mission }); setResults([]); onScenario(null); setError(null); setProgress({ phase: 'Preparing route', fraction: 0 }); setRunning(true); }
+  function start(type: 'analyze' | 'search') {
+    try { if (!client.current) throw new Error('Analysis worker is preparing.'); client.current.start({ type, mission }); setResults([]); onScenario(null); setError(null); setProgress({ phase: 'Preparing route', fraction: 0 }); setRunning(true); }
     catch (reason) { setError(String(reason)); }
   }
   const result = results[scenarioIndex], sample = result?.routeSamples[sampleIndex];
   return <section className="analysis-panel" aria-label="Manual route analysis">
-    <button onClick={start}>Analyze manual route RF</button>
+    <button onClick={() => start('analyze')}>Analyze manual route RF</button>
+    <button onClick={() => start('search')}>Find verified route alternatives</button>
     {running && <><button onClick={() => { client.current?.cancel(); setRunning(false); setProgress({ phase: 'Cancelled', fraction: 0 }); }}>Cancel analysis</button><label>{progress.phase}<progress aria-label="Analysis progress" max={1} value={progress.fraction} /></label></>}
     {error && <p role="alert">{error}</p>}
     {result && <>
-      <label>Equipment scenario<select aria-label="Equipment scenario" value={scenarioIndex} onChange={(e) => { const index = Number(e.target.value); setScenarioIndex(index); onScenario(results[index] ?? null); onInspect(0); }}>{results.map((r, i) => <option key={r.scenarioId} value={i}>{r.equipmentId}</option>)}</select></label>
+      <button onClick={() => {
+        const blob = new Blob([JSON.stringify({ schemaVersion: 1, mission, results }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob), anchor = document.createElement('a'); anchor.href = url; anchor.download = `${mission.id}-results.json`; anchor.click(); URL.revokeObjectURL(url);
+      }}>Export scenario results JSON</button>
+      <label>Equipment scenario<select aria-label="Equipment scenario" value={scenarioIndex} onChange={(e) => { const index = Number(e.target.value); setScenarioIndex(index); onScenario(results[index] ?? null); onInspect(0); }}>{results.map((r, i) => <option key={r.scenarioId} value={i}>{r.equipmentId}{routeObjective(r) ? ` · ${routeObjective(r)}` : ''}</option>)}</select></label>
       <p data-testid="rf-result-status">RF: {result.rfFeasibility.status} · Overall: {result.feasibility.status}</p>
       <dl><dt>Uplink / downlink minimum available margin</dt><dd>{numeric(result.summary.minimumUplinkMarginDb, 'dB')} / {numeric(result.summary.minimumDownlinkMarginDb, 'dB')}</dd><dt>Total sampled distance / climb</dt><dd>{numeric(result.summary.distanceM / 1000, 'km')} / {numeric(result.summary.climbM, 'm')}</dd><dt>Energy</dt><dd>{result.energyFeasibility.reasons.join(' ') || result.energyFeasibility.status}</dd></dl>
       <ComparisonCards results={results} selected={scenarioIndex} requiredMarginDb={mission.constraints.requiredMarginDb} onSelect={index => { setScenarioIndex(index); onScenario(results[index] ?? null); onInspect(0); }} />

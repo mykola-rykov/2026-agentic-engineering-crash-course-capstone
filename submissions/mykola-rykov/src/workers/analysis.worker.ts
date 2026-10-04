@@ -2,12 +2,12 @@ import { JobRunner } from './lifecycle';
 import { AnalysisCache, analyzeMission } from '../rf/analysis';
 import { TerrainStore } from '../terrain/store';
 import { evaluateRfView } from '../rf/views';
+import { searchMission } from '../routing/search';
 import type { WorkerResponse } from '../contracts/worker';
 const scope = self as unknown as { location: Location; postMessage: (message: WorkerResponse, transfers: Transferable[]) => void; onmessage: ((event: MessageEvent) => void) | null };
 let store: TerrainStore | null = null;
 let cache = new AnalysisCache();
 const runner = new JobRunner(async (request, context) => {
-  if (request.type === 'search') throw new Error('Automatic routing is not implemented yet.');
   const reference = request.mission.terrain;
   if (!store || store.manifest.id !== reference.packageId || store.manifest.packageVersion !== reference.packageVersion) {
     // The static launcher serves the application and packages at its localhost root.
@@ -20,6 +20,13 @@ const runner = new JobRunner(async (request, context) => {
   if (request.type === 'rf-view') {
     const grid = await evaluateRfView(request.mission, request.equipmentId, request.view, store, context, cache);
     await context.checkpoint(); context.emit(grid, [grid.marginBuffer, grid.powerBuffer, grid.validityBuffer]); return;
+  }
+  if (request.type === 'search') {
+    const outcome = await searchMission(request.mission, store, context, cache);
+    await context.checkpoint();
+    if (outcome.results.length) context.emit({ protocolVersion: 1, type: 'result', jobId: context.jobId, results: outcome.results, refinement: 'final' });
+    else context.emit({ protocolVersion: 1, type: 'no-route', jobId: context.jobId, corridorWidthM: request.mission.constraints.corridorWidthM, horizontalSpacingM: 250, verticalSpacingM: 50, reason: outcome.reason });
+    return;
   }
   const results = await analyzeMission(request.mission, store, context, cache);
   await context.checkpoint();

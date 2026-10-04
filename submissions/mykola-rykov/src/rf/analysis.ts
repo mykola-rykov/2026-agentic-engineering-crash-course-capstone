@@ -17,7 +17,9 @@ import { twoEndGains } from './antenna';
 import { evaluateRouteEnergy } from '../energy/integration';
 import { requiredInputs } from '../mission/files';
 import { twoWayBudget } from './budget';
-export interface RoutePoint extends ProjectedPoint { altitudeM: number; distanceM: number; headingDeg: number; pitchDeg: number; leg: 'outbound' | 'return' }
+import type { EnergyRoutePoint } from '../energy/integration';
+export interface RoutePoint extends EnergyRoutePoint { distanceM: number }
+export interface EvaluatedRoute { points: RoutePoint[]; totalM: number; assumptions: string[] }
 type Propagation = { status: 'known'; freeSpaceLossDb: number; diffractionLossDb: number; fraction: number; meetsFresnel: boolean; limitingPoint: ProjectedPoint; limitingHeightM: number; limitingDistanceM: number } | { status: 'unknown'; reason: string };
 export class AnalysisCache {
   readonly profiles = new BoundedCache<RadioProfile>(32 * 1024 * 1024);
@@ -97,14 +99,14 @@ export async function propagationAt(mission: MissionConfig, store: TerrainStore,
   cache.propagation.set(key, value, 512);
   return value;
 }
-export async function analyzeMission(input: MissionConfig, store: TerrainStore, context: JobContext, cache = new AnalysisCache()): Promise<ScenarioResult[]> {
+export async function analyzeMission(input: MissionConfig, store: TerrainStore, context: JobContext, cache = new AnalysisCache(), generatedRoute?: EvaluatedRoute): Promise<ScenarioResult[]> {
   const mission = parseMission(input), manifest = store.manifest, projection = createProjection(manifest);
   if (mission.terrain.packageId !== manifest.id || mission.terrain.packageVersion !== manifest.packageVersion || mission.terrain.verticalDatumId !== manifest.verticalDatum.id) throw new Error('Mission and installed terrain references differ.');
   if (mission.assumptions.rfModel.id !== 'p525-p526-delta-bullington' || mission.assumptions.rfModel.version !== '1') throw new Error('Unsupported RF model identity/version.');
   const launch = projection.forward(mission.launch.position), launchSurface = await sampleTerrain(manifest, (l, c, r) => store.get(l, c, r), launch);
   if (launchSurface.status !== 'known') throw new Error('Ground-station DSM elevation is missing.');
   const station = { ...launch, altitudeM: launchSurface.displayHeightM + mission.groundAntennaHeightAboveSurfaceM };
-  const route = await routePoints(mission, store, context);
+  const route = generatedRoute ?? await routePoints(mission, store, context);
   // Bound output storage before allocating per-equipment sample objects.
   if (route.points.length * mission.equipment.length * 2048 > 128 * 1024 * 1024) throw new Error('Requested manual result exceeds the 128 MiB working budget. Analyze fewer equipment combinations per job.');
   const results: ScenarioResult[] = [];
@@ -126,7 +128,7 @@ export async function analyzeMission(input: MissionConfig, store: TerrainStore, 
       if (budget.status === 'indeterminate' || clearance.status === 'unknown') missing = true;
       else { minUp = Math.min(minUp, budget.uplink.availableMarginDb); minDown = Math.min(minDown, budget.downlink.availableMarginDb); }
       if (budget.status === 'infeasible') violations.push({ constraint: 'radio-margin', reason: `${budget.limitingDirection} margin ${budget.minimumMarginDb.toFixed(2)} dB is below ${mission.constraints.requiredMarginDb} dB.`, sampleIndex: i });
-      if (clearance.status === 'known' && mission.constraints.minimumTerrainClearanceM !== null && clearance.terrainClearanceM < mission.constraints.minimumTerrainClearanceM) violations.push({ constraint: 'DSM-clearance', reason: 'Aircraft is below required conservative DSM clearance.', sampleIndex: i });
+      if (surface.status === 'known' && mission.constraints.minimumTerrainClearanceM !== null && point.altitudeM - surface.obstructionHeightM - mission.assumptions.terrainHeightUncertaintyM < mission.constraints.minimumTerrainClearanceM) violations.push({ constraint: 'DSM-clearance', reason: 'Aircraft is below required conservative DSM clearance.', sampleIndex: i });
       for (const [bound, less] of [[mission.constraints.minimumAltitude, true], [mission.constraints.maximumAltitude, false]] as const) {
         if (!bound || surface.status !== 'known') continue;
         const limit = resolveAltitude(bound, manifest.verticalDatum.id, surface.displayHeightM)!;
@@ -141,7 +143,7 @@ export async function analyzeMission(input: MissionConfig, store: TerrainStore, 
     const energyFeasibility = energy.feasibility;
     const missingConstraints = requiredInputs(mission);
     const feasibility: ScenarioResult['feasibility'] = violations.length || rfFeasibility.status === 'infeasible' || energyFeasibility.status === 'infeasible' ? { status: 'infeasible', reasons: ['Evaluated route constraints fail.'] } : rfFeasibility.status !== 'feasible' || energyFeasibility.status !== 'feasible' || missingConstraints.length ? { status: 'indeterminate', reasons: [...(missingConstraints.length ? [`Required constraints are missing: ${missingConstraints.join(', ')}.`] : []), ...(rfFeasibility.status !== 'feasible' ? rfFeasibility.reasons : []), ...(energyFeasibility.status !== 'feasible' ? energyFeasibility.reasons : [])] } : { status: 'feasible', reasons: [] };
-    results.push(parseScenarioResult({ schemaVersion: 1, jobId: context.jobId, scenarioId: `${mission.id}-${equipment.id}`, missionId: mission.id, equipmentId: equipment.id, terrain: mission.terrain, models: { rf: mission.assumptions.rfModel, energy: mission.assumptions.energyModel }, assumptions: ['ITU-R P.525-5 / P.526-15; scalar β=1 spherical approximation.', 'DSM and matching vertical datum; terrain uncertainty and RF allowance are separate.', 'Missing aircraft inputs use geometric track heading/pitch for RF; configured models use wind-corrected air heading and attitude.', 'No interference, multipath, explicit foliage or weather simulation.', ...energy.assumptions, `Manual route sampled at no more than ${manifest.levels[0]!.cellSizeM} m; all radio rays use the finest installed grid.`], routeSamples: samples, summary: { distanceM: route.totalM, durationS: energy.durationS, climbM, minimumUplinkMarginDb: Number.isFinite(minUp) ? minUp : null, minimumDownlinkMarginDb: Number.isFinite(minDown) ? minDown : null, minimumTwoWayMarginDb: Number.isFinite(minUp) && Number.isFinite(minDown) ? Math.min(minUp, minDown) : null, energy: energy.energy }, rfFeasibility, energyFeasibility, feasibility, constraintViolations: violations }));
+    results.push(parseScenarioResult({ schemaVersion: 1, jobId: context.jobId, scenarioId: `${mission.id}-${equipment.id}`, missionId: mission.id, equipmentId: equipment.id, terrain: mission.terrain, models: { rf: mission.assumptions.rfModel, energy: mission.assumptions.energyModel }, assumptions: ['ITU-R P.525-5 / P.526-15; scalar β=1 spherical approximation.', 'DSM and matching vertical datum; terrain uncertainty and RF allowance are separate.', 'Missing aircraft inputs use geometric track heading/pitch for RF; configured models use wind-corrected air heading and attitude.', 'No interference, multipath, explicit foliage or weather simulation.', ...energy.assumptions, ...(generatedRoute?.assumptions ?? [`Manual route sampled at no more than ${manifest.levels[0]!.cellSizeM} m; all radio rays use the finest installed grid.`])], routeSamples: samples, summary: { distanceM: route.totalM, durationS: energy.durationS, climbM, minimumUplinkMarginDb: Number.isFinite(minUp) ? minUp : null, minimumDownlinkMarginDb: Number.isFinite(minDown) ? minDown : null, minimumTwoWayMarginDb: Number.isFinite(minUp) && Number.isFinite(minDown) ? Math.min(minUp, minDown) : null, energy: energy.energy }, rfFeasibility, energyFeasibility, feasibility, constraintViolations: violations }));
   }
   return results;
 }

@@ -1,5 +1,9 @@
 import type { ScenarioResult } from '../contracts/result';
 type Metrics = Pick<ScenarioResult, 'summary' | 'rfFeasibility'>;
+export function routeObjective(result: ScenarioResult) {
+  const objective = result.assumptions.map(a => /^Bounded (shortest|energy|margin) objective/.exec(a)?.[1]).find(Boolean);
+  return objective === 'shortest' ? 'Shortest found route' : objective === 'energy' ? 'Lowest energy found route' : objective === 'margin' ? 'Highest minimum margin found route' : null;
+}
 export function compareMetrics(current: Metrics, baseline: Metrics) {
   const pros: string[] = [], cons: string[] = [], unavailable: string[] = [];
   const distanceDifferenceKm = (current.summary.distanceM - baseline.summary.distanceM) / 1000;

@@ -46,11 +46,11 @@ All items describe future implementation and remain unchecked. Follow the five d
 ## 4. Stage 4 - Bounded automatic routing and final verification
 
 - [x] 4.1 Implement adjustable waypoint/direct-route corridors with a 10 km default and package clipping; verify corridor changes restrict explored candidates and unknown coverage cannot support feasible routes.
-- [ ] 4.2 Build the coarse approximately 250 m horizontal/50 m vertical graph and aircraft motion states; verify fixed-wing heading-aware turn geometry and multirotor climb/acceleration/tilt constraints.
-- [ ] 4.3 Implement shortest-feasible search with distance/energy resource accounting and all mission constraints; verify rejection fixtures for distance, reserve, clearance, altitude, climb/turn, and either directional margin.
-- [ ] 4.4 Add lowest-energy and highest-minimum-margin searches, deduplication, and nondominated filtering; verify a fixture with distinct objective winners plus duplicate/dominated candidates.
-- [ ] 4.5 Implement return-mission evaluation with separate inbound heading, wind, orientation, RF, and energy; verify outbound-only success cannot pass the complete return mission.
-- [ ] 4.6 Refine promising corridors against finest available terrain and verify samples at no more than terrain cell spacing with extra ridge/turn/threshold samples; verify a ridge missed by the coarse graph invalidates or repairs the final route.
-- [ ] 4.7 Add route smoothing only with full revalidation of modified geometry; verify a smoothing-induced clearance or motion violation is rejected before publication as feasible.
-- [ ] 4.8 Add progressive bounded search, cancellation, and qualified no-result messages; verify abort responsiveness, memory eviction, and wording that identifies corridor/resolution without asserting universal impossibility.
-- [ ] 4.9 Integrate verified route alternatives with scenario cards and JSON assumptions; document objectives, search bounds, sampling guarantees, and outcome states, and pass end-to-end fixtures and `pnpm check` for this stage.
+- [x] 4.2 Build the coarse approximately 250 m horizontal/50 m vertical graph and aircraft motion states; verify fixed-wing heading-aware turn geometry and multirotor climb/acceleration/tilt constraints.
+- [x] 4.3 Implement shortest-feasible search with distance/energy resource accounting and all mission constraints; verify rejection fixtures for distance, reserve, clearance, altitude, climb/turn, and either directional margin.
+- [x] 4.4 Add lowest-energy and highest-minimum-margin searches, deduplication, and nondominated filtering; verify a fixture with distinct objective winners plus duplicate/dominated candidates.
+- [x] 4.5 Implement return-mission evaluation with separate inbound heading, wind, orientation, RF, and energy; verify outbound-only success cannot pass the complete return mission.
+- [x] 4.6 Refine promising corridors against finest available terrain and verify samples at no more than terrain cell spacing with extra ridge/turn/threshold samples; verify a ridge missed by the coarse graph invalidates or repairs the final route.
+- [x] 4.7 Add route smoothing only with full revalidation of modified geometry; verify a smoothing-induced clearance or motion violation is rejected before publication as feasible.
+- [x] 4.8 Add progressive bounded search, cancellation, and qualified no-result messages; verify abort responsiveness, memory eviction, and wording that identifies corridor/resolution without asserting universal impossibility.
+- [x] 4.9 Integrate verified route alternatives with scenario cards and JSON assumptions; document objectives, search bounds, sampling guarantees, and outcome states, and pass end-to-end fixtures and `pnpm check` for this stage.

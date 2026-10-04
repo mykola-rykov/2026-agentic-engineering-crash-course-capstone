@@ -26,6 +26,8 @@ Results distinguish feasible, infeasible, and indeterminate states, with reasons
 
 Route samples may include `terrainEvidence` with local display/obstruction elevations and datum, independently of radio clearance. This allows the inspector to show known local DSM even when a terminal's conservative height or a distant radio-ray gap prevents a budget. A known constraint failure makes overall feasibility infeasible while incomplete RF evidence can still make aggregate RF indeterminate.
 
+The scenario-results download is a JSON envelope `{ schemaVersion: 1, mission, results }`; the mission and each scenario use their existing version-1 contracts. It retains geometry samples, budgets and objective/corridor/resolution/model assumptions. This is a results artifact, not a mission-only import. Progressive search responses contain already verified candidates while other objectives continue; only a final response ends the job. [Route-search limits](ROUTE_SEARCH.md) bound labels, edge caches and accumulated results.
+
 ## Runtime terrain coordinates and sampling
 
 `src/terrain/coordinates.ts` converts WGS84 longitude/latitude to the package's metric projection through bundled Proj4js; GDAL reference fixtures check regional, antimeridian, and high-latitude cases. Vertical conversion is separate: datum mismatch raises an error; resolving a DSM-relative altitude requires a known surface elevation. `src/terrain/sampling.ts` uses pixel-center alignment, row-major north-to-south indexing, interpolation across tile seams for display, and maximum neighbouring obstruction heights. Missing neighbouring samples remain unknown. Geographic bounds are an overview; exact coverage is enforced in projected coordinates and validity masks.
