@@ -49,7 +49,7 @@ Runtime terrain and result storage SHALL use bounded working sets and SHALL avoi
 
 ### Requirement: Measured performance targets
 
-Acceptance SHALL demonstrate at least 30 FPS interaction, a coarse result within 5 seconds, and refined results within 30 seconds for 12 equipment configurations on a documented 16 GB laptop benchmark.
+Acceptance SHALL demonstrate at least 30 FPS interaction, a coarse result within 5 seconds, and refined results within 30 seconds for 12 equipment configurations on a documented 24 GB laptop benchmark.
 
 #### Scenario: Reproducible benchmark
 

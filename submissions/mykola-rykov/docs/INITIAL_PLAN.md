@@ -205,7 +205,7 @@ Report “no feasible route found within this corridor and search resolution” 
 - Retain only active terrain tiles and bounded result caches.
 - Show progressive results and allow immediate cancellation.
 
-Initial benchmark targets on a documented 16 GB laptop: at least 30 FPS interaction, a coarse result within 5 seconds, and refined results within 30 seconds for 12 equipment configurations. These are acceptance targets to measure, not established performance claims.
+Initial benchmark targets on a documented 24 GB laptop: at least 30 FPS interaction, a coarse result within 5 seconds, and refined results within 30 seconds for 12 equipment configurations. These are acceptance targets to measure, not established performance claims.
 
 ## 5. Validation, delivery and defaults
 

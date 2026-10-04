@@ -24,6 +24,10 @@ const routeSampleSchema = z.strictObject({
   distanceAlongRouteM: nonnegative, elapsedTimeS: nonnegative.nullable(),
   leg: z.enum(['outbound', 'return']), position: coordinateSchema, altitude: altitudeSchema, attitude: attitudeSchema,
   uplink: linkBudgetSchema.nullable(), downlink: linkBudgetSchema.nullable(),
+  terrainEvidence: z.discriminatedUnion('status', [
+    z.strictObject({ status: z.literal('known'), displayElevationM: finite, obstructionElevationM: finite, datumId: text }),
+    z.strictObject({ status: z.literal('unknown'), reason: text }),
+  ]).optional(),
   clearance: z.discriminatedUnion('status', [knownClearance, unknownClearance]),
 });
 const energySchema = z.strictObject({

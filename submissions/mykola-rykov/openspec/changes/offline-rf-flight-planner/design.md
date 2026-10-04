@@ -68,7 +68,7 @@ Establish `pnpm check` for type, code-quality, and automated validation checks. 
 
 Validate analytical free-space, independent single/multiple-ridge diffraction fixtures, measurable 100 km curvature, rotations, asymmetric radios, and expected power dB changes. Validate constant-power energy by hand calculations and trends for mass, drag, climbs, turns, wind, and return legs. Verify final sampled constraints after refinement/smoothing and unknown-data behavior.
 
-Benchmark on a documented 16 GB desktop-class laptop: at least 30 FPS interaction, coarse results within 5 seconds, and refined results within 30 seconds for 12 equipment configurations. Record region, terrain resolution, mission/corridor/altitude bounds, hardware/browser, cache state, memory peaks, timing, and dataset/configuration versions. Treat these as acceptance targets, not achieved claims. If a gate fails, profile and revise implementation before accepting that stage; do not silently weaken the target.
+Benchmark on a documented 24 GB desktop-class laptop: at least 30 FPS interaction, coarse results within 5 seconds, and refined results within 30 seconds for 12 equipment configurations. Record region, terrain resolution, mission/corridor/altitude bounds, hardware/browser, cache state, memory peaks, timing, and dataset/configuration versions. Treat these as acceptance targets, not achieved claims. If a gate fails, profile and revise implementation before accepting that stage; do not silently weaken the target.
 
 ## Risks / Trade-offs
 
@@ -86,6 +86,6 @@ No existing application data needs migration. Deliver sequentially: one package/
 ## Open Questions
 
 - Which geographic bounds should the first shipped region cover? Select before source acquisition; the builder and coverage contract are region-independent.
-- Which reference hardware/browser combination will be recorded for the 16 GB benchmark?
+- Which reference hardware/browser combination will be recorded for the 24 GB benchmark?
 - Which measured aircraft/radio datasets will supplement the visibly illustrative presets?
 - Which launcher packaging conventions and supported desktop OS combinations should the first release document?

@@ -57,7 +57,7 @@ All items describe future implementation and remain unchecked. Follow the five d
 
 ## 5. Stage 5 - Benchmarks, additional regions, and release integration
 
-- [ ] 5.1 Record the 16 GB benchmark laptop/browser, representative mission/region, altitude/corridor bounds, 12 equipment configurations, versions, and cache conditions; deliver a reproducible benchmark protocol and verify its setup runs as documented.
+- [ ] 5.1 Record the 24 GB benchmark laptop/browser, representative mission/region, altitude/corridor bounds, 12 equipment configurations, versions, and cache conditions; deliver a reproducible benchmark protocol and verify its setup runs as documented.
 - [ ] 5.2 Measure interaction FPS, coarse/refined latency, cancellation, and peak memory under repeated comparisons; verify at least 30 FPS, coarse results within 5 seconds, refined results within 30 seconds, and bounded caches, profiling/remediating failures before acceptance.
 - [ ] 5.3 Build and validate additional regional fixtures/packages using the established pipeline, including fallback-source metadata and cross-region geographic edge cases; verify package budgets, checksums, attribution, seams, datum handling, negative elevations, antimeridian, and high-latitude behavior remain correct.
 - [ ] 5.4 Select/document the first-release desktop OS/browser support matrix and package the static localhost launcher with application, workers, fonts, context, and regions; verify clean installation and launch on every declared supported target.

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { MissionConfig } from '../contracts/mission';
 import { parseMission } from '../contracts/mission';
 import type { TerrainPackageManifest } from '../contracts/terrain';
+import { illustrativeAircraft } from '../energy/profiles';
 import { exportMission, importMission, requiredInputs } from './files';
 interface Props { mission: MissionConfig; terrain: TerrainPackageManifest; onChange: (mission: MissionConfig) => void }
 function NumberField({ label, value, onChange, min, max }: { label: string; value: number | null; onChange: (n: number | null) => void; min?: number; max?: number }) {
@@ -26,6 +27,11 @@ export default function Configuration({ mission, terrain, onChange }: Props) {
     <details><summary>Aircraft, radio and constraints</summary>
       <p>Aircraft and isotropic antenna examples are illustrative and uncalibrated. Configure measured values using the complete mission editor below.</p>
       <label>Aircraft type<select aria-label="Aircraft type" value={mission.aircraft.kind} onChange={(e) => update({ ...mission, aircraft: { ...mission.aircraft, kind: e.target.value as 'fixed-wing' | 'multirotor', powerModel: null } })}><option value="fixed-wing">Fixed-wing</option><option value="multirotor">Multirotor</option></select></label>
+      <button onClick={() => update({ ...mission, aircraft: illustrativeAircraft(mission.aircraft.kind) })}>Use illustrative {mission.aircraft.kind} profile</button>
+      <p>Profile: {mission.aircraft.name} · {mission.aircraft.calibration}. {mission.aircraft.provenance}</p>
+      <label>Profile provenance<input value={mission.aircraft.provenance} onChange={(e) => update({ ...mission, aircraft: { ...mission.aircraft, provenance: e.target.value } })} /></label>
+      <label>Profile calibration<select aria-label="Profile calibration" value={mission.aircraft.calibration} onChange={(e) => update({ ...mission, aircraft: { ...mission.aircraft, calibration: e.target.value as 'illustrative' | 'measured' } })}><option value="illustrative">Illustrative / uncalibrated</option><option value="measured">Measured dataset (provide provenance)</option></select></label>
+      {Object.entries(mission.aircraft.powerModel ?? {}).filter(([, value]) => typeof value === 'number').map(([field, value]) => <NumberField key={field} label={`Aircraft ${field}`} value={value as number} onChange={(n) => { if (mission.aircraft.powerModel) update({ ...mission, aircraft: { ...mission.aircraft, powerModel: { ...mission.aircraft.powerModel, [field]: n ?? NaN } } } as MissionConfig); }} />)}
       <NumberField label="Battery capacity (Wh)" value={mission.aircraft.batteryCapacityWh} min={.001} onChange={(batteryCapacityWh) => update({ ...mission, aircraft: { ...mission.aircraft, batteryCapacityWh } })} />
       <NumberField label="Frequency (MHz)" value={mission.frequencyHz / 1e6} min={100} max={6000} onChange={(n) => update({ ...mission, frequencyHz: (n ?? NaN) * 1e6 })} />
       {(['uplink', 'downlink'] as const).map((direction) => <fieldset key={direction}><legend>{direction === 'uplink' ? 'Uplink · ground → aircraft' : 'Downlink · aircraft → ground'}</legend><NumberField label={`${direction} transmit power (dBm)`} value={equipment[direction].transmitPowerDbm} onChange={(n) => radio(direction, 'transmitPowerDbm', n ?? NaN)} /><NumberField label={`${direction} receiver sensitivity (dBm)`} value={equipment[direction].receiverSensitivityDbm} onChange={(n) => radio(direction, 'receiverSensitivityDbm', n ?? NaN)} /></fieldset>)}
